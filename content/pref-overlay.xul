@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+
+<prefwindow id="sass-prefs"
+     title="SASS Preferences"
+     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+
+	<prefpane id="sass-pane" label="SASS Preferences">
+	  <preferences>
+		<preference id="pref_showMessages" name="extensions.sass.showMessages" type="bool"/>
+	  </preferences>
+
+	  <hbox align="center">
+		<checkbox id="showMessages" preference="pref_showMessages" label="Show console messages when saving files" />
+	  </hbox>
+	</prefpane>
+
+</prefwindow>

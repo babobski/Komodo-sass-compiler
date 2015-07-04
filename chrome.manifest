@@ -1,0 +1,3 @@
+content sass content/
+overlay chrome://komodo/content/komodo.xul chrome://sass/content/overlay.xul
+#overlay chrome://komodo/content/pref/pref-html.xul chrome://sass/content/pref-overlay.xul
