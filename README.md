@@ -1,4 +1,4 @@
-# Sass-compiler
+# Komodo-sass-compiler
 Sass/Scss compiler for komodo edit/ide
 
 a SASS compiler for Komodo Edit/Ide.  
