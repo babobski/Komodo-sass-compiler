@@ -121,14 +121,17 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 		
 		outputSass = self._process_sass(path, base, buffer);
 		
-		less.render(outputSass, {compress: compress})
-		.then(function(output) {
-			d.buffer = output.css;
-			self._log('Compiled SASS buffer', konsole.S_OK);
-		},
-		function(error) {
-			self._log( error, konsole.S_ERROR);
-		});	
+		var sass = new Sass('chrome://sass/content/sass/sass.worker.js');
+		SassStyle = compress == true ? Sass.style.compressed : Sass.style.nested;
+		treatAsSass = file.ext == '.sass' ? true : false;
+		
+		sass.compile(outputSass, {  style: SassStyle, indentedSyntax: treatAsSass }, function(result){
+			if (result.status == 0) {
+				d.buffer = result.text;
+			} else {
+				self._log('ERROR message ' + result.message, konsole.S_ERROR);
+			}
+		});
 	};
 
 	this.compileCompressBuffer = function() {
@@ -147,24 +150,25 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 			base = file.baseName,
 			path = (file) ? file.URI : null;
 			
-			self._log('Compiling SASS selection', konsole.S_SASS);
-			if (prefs.getBoolPref('showMessages') == false) {
-				self._notifcation('Compiling SASS selection');
+		self._log('Compiling SASS selection', konsole.S_SASS);
+		if (prefs.getBoolPref('showMessages') == false) {
+			self._notifcation('Compiling SASS selection');
+		}
+	
+		outputSass = self._process_sass(path, base, fileContent);
+		
+		var sass = new Sass('chrome://sass/content/sass/sass.worker.js');
+		SassStyle = compress == true ? Sass.style.compressed : Sass.style.nested;
+		treatAsSass = file.ext == '.sass' ? true : false;
+		
+		sass.compile(outputSass, {  style: SassStyle, indentedSyntax: treatAsSass }, function(result){
+			if (result.status == 0) {
+				var sass = result.text;
+				scimoz.replaceSel(sass);
+			} else {
+				self._log('ERROR message ' + result.message, konsole.S_ERROR);
 			}
-		
-			outputSass = self._process_sass(path, base, fileContent);
-		
-			less.render(outputSass, {compress: compress})
-			.then(function(output) {
-				var css = output.css;
-				scimoz.targetStart = scimoz.currentPos;
-				scimoz.targetEnd = scimoz.anchor;
-				scimoz.replaceTarget(css.length, css);
-				self._log('Compiled SASS selection', konsole.S_OK);
-			},
-			function(error) {
-				self._log( error, konsole.S_ERROR);
-			});
+		});
 	};
 
 	this.compileCompressSelection = function() {
