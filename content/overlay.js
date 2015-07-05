@@ -89,7 +89,7 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 						self._saveFile(newFilename, result.text);
 						self._log('File saved', konsole.S_OK);
 						if (prefs.getBoolPref('showMessages') == false) {
-						self._notifcation('SASS File saved');
+						self._notifcation( 'SASS File saved');
 					}
 					} else {
 						self._log('ERROR message ' + result.message, konsole.S_ERROR);
@@ -484,7 +484,6 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 			var scimoz = ko.views.manager.currentView.scimoz;
 			var sep = String.fromCharCode(scimoz.autoCSeparator);
 			var completions = sassData.vars;
-			var defaultcompletion = ["@import", "@media", "@font-face", "@key-frame", "@-webkit-key-frames"];
 			
 			if (scimoz.autoCMaxHeight !== 10) {
 				scimoz.autoCMaxHeight = 10;
@@ -506,7 +505,6 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 					e.preventDefault();
 					e.stopPropagation();
 					
-					defaultcompletion = defaultcompletion.sort();
 					scimoz.replaceSel('');
 				 
 					if (typeof completions !== 'undefined' && completions.length > 0) {
