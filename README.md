@@ -1,7 +1,9 @@
 # Komodo-sass-compiler
 Sass/Scss compiler for komodo edit/ide
 
-a SASS compiler for Komodo Edit/Ide.  
+a SASS compiler for Komodo Edit/Ide.
+
+<b>not finished</b>
 
 <h2>Usage</h2>
 <p>Goto to Tools -&gt; SASS and select an option.</p>
