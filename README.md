@@ -3,8 +3,6 @@ Sass/Scss compiler for komodo edit/ide
 
 a SASS compiler for Komodo Edit/Ide.
 
-<b>not finished</b>
-
 <h2>Usage</h2>
 <p>Goto to Tools -&gt; SASS and select an option.</p>
 <ul>
@@ -56,12 +54,13 @@ This completion box is triggered when you type <code>$</code>.</p>
 <p>
 <b>
 note  
-</b>
-on .scss files the completion box is canceld if you type after the $
+</b>  
+on .scss files the completion box is canceled if you type after the $ (bug)
 </p>
-<p>To set up the auto completion you will have to set 2 marco's the first one is to enable the completion, and the other to get the $vars from your document.<br>
-A known <b>bug</b> is that after insertion white space is added, i created a "fix" if you type <code>;</code> or <code>)</code> the white space is removed and if there is a additional <code>;</code> or <code>)</code> it will be removed (for or Emmet users).</p>
-<p>The following marco will trigger a custom auto completion box with SASS $vars (trigger after start up).  
+<p>To set up the auto completion you will have to set 2 macro's the first one is to enable the completion, and the other to get the $vars from your document.<br>
+A known <b>bug</b> is that after insertion white space is added, i created a "fix" if you type <code>;</code> or <code>)</code> the white space is removed and if there is a additional <code>;</code> or <code>)</code> it will be removed (for or Emmet users).<br>
+for .sass users you can just press enter, and the white space is removed</p>
+<p>The following macro will trigger a custom auto completion box with SASS $vars (trigger after start up).  
 </p>
 
 ```javascript
@@ -69,7 +68,7 @@ if (extensions.sass) {
     extensions.sass.varCompletion();
 }
  ```
- <p>The next marco is for getting the $vars form your document (current view or the file where the file watcher is enabled including @imports) (trigger on custom key binding, i use <kbd>Alt</kbd> + <kbd>g</kbd>)<br>
+ <p>The next macro is for getting the $vars form your document (current view or the file where the file watcher is enabled including @imports) (trigger on custom key binding, i use <kbd>Alt</kbd> + <kbd>g</kbd>)<br>
  if you working with SASS and you have not search for $vars and you trigger the completion $.</p>
  ```javascript
  if (extensions.sass) {
