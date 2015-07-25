@@ -53,8 +53,8 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 		if (file.ext == '.sass' || file.ext == '.scss') {
 			
 			if (getVars) {
-				self._log('Getting SASS vars', konsole.S_SASS);
-				if (prefs.getBoolPref('showMessages') == false) {
+				self._log('Getting SASS vars', konsole.S_LESS);
+				if (prefs.getBoolPref('showMessages') == false && prefs.getBoolPref('showNotVars')) {
 					self._notifcation('Getting SASS vars');
 				}
 			} else {
@@ -75,7 +75,11 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 					self._log(sassData.vars, konsole.S_OK);
 				} else {
 					sassData.vars = [ "@No_vars_found" ];
-					self._log('No SASS vars found', konsole.S_ERROR);
+					if (prefs.getBoolPref('showMessages')) {
+						self._log('No SASS vars found', konsole.S_ERROR);
+					} else {
+						self._notifcation('No SASS vars found', true);
+					}
 				}
 				
 			} else {
@@ -88,11 +92,15 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 						var newFilename = path.replace(file.ext, '.css');
 						self._saveFile(newFilename, result.text);
 						self._log('File saved', konsole.S_OK);
-						if (prefs.getBoolPref('showMessages') == false) {
+						if (prefs.getBoolPref('showMessages') == false && prefs.getBoolPref('showNotSave')) {
 						self._notifcation( 'SASS File saved');
 					}
 					} else {
-						self._log('ERROR message ' + result.message, konsole.S_ERROR);
+						if (prefs.getBoolPref('showMessages')) {
+							self._log('ERROR message ' + result.message, konsole.S_ERROR);
+						} else {
+							self._notifcation(result.message, true);
+						}
 					}
 				});
 			}
@@ -119,7 +127,7 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 			self._notifcation('Compile SASS buffer');
 		}
 		
-		outputSass = self._process_sass(path, base, buffer);
+		outputSass = self._process_sass(path, base, buffer, file.ext);
 		
 		var sass = new Sass('chrome://sass/content/sass/sass.worker.js');
 		SassStyle = compress == true ? Sass.style.compressed : Sass.style.nested;
@@ -129,7 +137,11 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 			if (result.status == 0) {
 				d.buffer = result.text;
 			} else {
-				self._log('ERROR message ' + result.message, konsole.S_ERROR);
+				if (prefs.getBoolPref('showMessages')) {
+					self._log('ERROR message ' + result.message, konsole.S_ERROR);
+				} else {
+					self._notifcation(result.message, true);
+				}
 			}
 		});
 	};
@@ -155,7 +167,7 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 			self._notifcation('Compiling SASS selection');
 		}
 	
-		outputSass = self._process_sass(path, base, fileContent);
+		outputSass = self._process_sass(path, base, text, file.ext);
 		
 		var sass = new Sass('chrome://sass/content/sass/sass.worker.js');
 		SassStyle = compress == true ? Sass.style.compressed : Sass.style.nested;
@@ -166,7 +178,11 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 				var sass = result.text;
 				scimoz.replaceSel(sass);
 			} else {
-				self._log('ERROR message ' + result.message, konsole.S_ERROR);
+				if (prefs.getBoolPref('showMessages')) {
+					self._log('ERROR message ' + result.message, konsole.S_ERROR);
+				} else {
+					self._notifcation(result.message, true);
+				}
 			}
 		});
 	};
@@ -186,7 +202,12 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 			
 
 		if (!file) {
-			self._log('Please save the file first', konsole.S_ERROR);
+			if (prefs.getBoolPref('showMessages')) {
+				self._log('Please save the file first', konsole.S_ERROR);
+			} else {
+				self._notifcation('Please save the file first', true);
+			}
+			
 			return;  
 		}
 		
@@ -201,7 +222,11 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 				self._notifcation("file watcher enabled");
 			}
 		} else {
-			self._log('Please select a SASS file', konsole.S_ERROR);
+			if (prefs.getBoolPref('showMessages')) {
+				self._log('Please select a SASS file', konsole.S_ERROR);
+			} else {
+				self._notifcation('Please save the file first', true);
+			}
 			return;  
 		}
 	}
@@ -344,7 +369,11 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 			reader.close();
 			output[1] = newRoot;
 		} catch(e){
-			self._log('ERROR Reading file: ' + fileUrl, konsole.S_ERROR);
+			if (prefs.getBoolPref('showMessages')) {
+				self._log('ERROR Reading file: ' + fileUrl, konsole.S_ERROR);
+			} else {
+				self._notifcation('ERROR Reading file: ' + fileUrl, true);
+			}
 		}
 		
 		return output;
@@ -359,10 +388,12 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 	
 	this._notifcation = function($message){
 		$message =$message || false;
+		error = error || false;
+		
+		var icon = error ? 'chrome://sass/content/sass-error-icon.png' : 'chrome://sass/content/sass-icon.png';
 		if (!("Notification" in window)) {
 		  alert("This browser does not support system notifications");
 		}
-	  
 		else if (Notification.permission === "granted") {
 		  var options = {
 			body: $message,
@@ -442,7 +473,11 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 				file = d.file;
 				
 				if (!file) {
-					self._log('Please save the file first', konsole.S_ERROR);
+					if (prefs.getBoolPref('showMessages')) {
+						self._log('Please save the file first', konsole.S_ERROR);
+					} else {
+						self._notifcation('Please save the file first', true);
+					}
 					return;  
 				}
 				
