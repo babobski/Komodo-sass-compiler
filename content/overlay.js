@@ -222,87 +222,34 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 		
 		var buffer = '',
 		newContent = '',
-		matchImports = /(@import\s*['"][^"]+['"];|@import\s+\W[^"]+\W\s+['"][^"]+["'];)/,
-		matchValue = /['"](.*?)['"]/,
-		nameHasDot = /[a-z0-9][.][a-z]/i,
-		quotes = /['"]+/g;
+		matchImports = /(@import\s*['"][^"';]+['"];|@import\s*[a-z0-9][^\s\t]+)/,
+		matchValue = /[a-z0-9][^"]+/i;
 		
 		if (imports !== -1) {
 			imports.forEach(function(value, i){
 				//if is regular @import
-				if (value.match(/@import\s*['"][^"]+['"];/) !== null) {
-					if (value.match(matchValue) !== null) {
-						var xf = value.match(matchValue),
-						fileName = xf.toString().split(',')[1].replace(quotes, '');
-						if (fileName.match(nameHasDot) == null) {
-							fileName = fileName + fileExt;
-						}
-						self._log('@import ' + fileName, konsole.S_CUSTOM);
-						newContent = self._readFile(rootPath,  fileName);
-						buffer = buffer + newContent[0];
-						
-						if (buffer.toString().match(matchImports) !== null) {
-							var cleanLess = self._strip_comments(buffer);
-							newImport = self._split_on_imports(cleanLess);
-							buffer = self._process_imports(newImport, newContent[1]);
-						} 
-					}
-				}
-				
-				//if (option) @import process
-				if (value.match(/@import\s+\W[^"]+\W\s+['"][^"]+["'];/) !== null) {
-					var type = value.match(/\(([^\)]+)\)/).toString().split(',')[1];
+				var file = value;
+				if (file.match(matchImports) !== null) {
 					
-					switch (type) {
-						case 'css':
-							buffer = buffer + value;
-							break;
-						case 'sass':
-							if (value.match(matchValue) !== null) {
-								var xf = value.match(matchValue),
-								fileName = xf.toString().split(',')[1].replace(quotes, '');
-								if (fileName.match(nameHasDot) == null) {
-									fileName = fileName + fileExt;
-								}
-								self._log('@import ' + fileName, konsole.S_CUSTOM);
-								newContent = self._readFile(rootPath,  fileName);
-								buffer = buffer + newContent[0];
-								
-								if (buffer.toString().match(matchImports) !== null) {
-									var cleanLess = self._strip_comments(buffer);
-									newImport = self._split_on_imports(cleanLess);
-									buffer = self._process_imports(newImport, newContent[1]);
-								} 
-							}
-							break;
-						case 'optional':
-						case 'inline':
-						case 'reference':
-						case 'multiple':
-						default:
-							self._log('@import (' + type + ') is not supported, file is treated as SASS' , konsole.S_WARNING);
-							if (value.match(matchValue) !== null) {
-								var xf = value.match(matchValue),
-								fileName = xf.toString().split(',')[1].replace(quotes, '');
-								if (fileName.match(nameHasDot) == null) {
-									fileName = fileName + fileExt;
-								}
-								newContent = self._readFile(rootPath,  fileName);
-								buffer = buffer + newContent[0];
-								
-								if (buffer.toString().match(matchImports) !== null) {
-									var cleanLess = self._strip_comments(buffer);
-									newImport = self._split_on_imports(cleanLess);
-									buffer = self._process_imports(newImport, newContent[1]);
-								} 
-							}
-							break;
-					}
+					var fileName = file.replace(/(@import\s|["';]+)/gi, ''),
+					
+					fileName = fileName + fileExt;
+					
+					self._log('@import ' + fileName, konsole.S_CUSTOM);
+					newContent = self._readFile(rootPath,  fileName);
+					buffer = buffer + newContent[0];
+					
+					if (buffer.toString().match(matchImports) !== null) {
+						var cleanLess = self._strip_comments(buffer);
+						newImport = self._split_on_imports(cleanLess);
+						buffer = self._process_imports(newImport, newContent[1]);
+					} 
 					
 				}
+					
 				//if isn't @import it's sass/css
-				if (value.match(/@import\s*['"][^"]+['"];/) == null && value.match(/@import\s+\W[^"]+\W\s+['"][^"]+["'];/) == null) {
-					buffer = buffer + value;
+				if (file.match(/@import\s*['"][^"';]+['"];/) == null && file.match(/@import\s*[a-z0-9][^\s\t]+/) == null) {
+					buffer = buffer + file;
 				}
 			}); 
 		} 
@@ -328,12 +275,12 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 	}
 	
 	this._strip_comments = function(string) {
-		var patern = /\/\/@import\s+['"][^']+['"];|\/\/@import\s+\W[^"]+\W\s+['"][^";]+["'];/g;
+		var patern = /\/\/@import\s*['"][^"';]+['"];|\/\/@import\s*[a-z0-9][^\s\t]+/gi;
 		return string.toString().replace(patern , '' );
 	}
 	
 	this._split_on_imports = function(cleanless){
-		var patern = /(@import\s*['"][^"';]+['"];|@import\s+\W[^"]+\W\s+['"][^''";]+["'];)/g;
+		var patern = /(@import\s*['"][^"';]+['"];|@import\s*[a-z0-9][^\s\t]+)/gi;
 		return cleanless.split(patern);
 	}
 
@@ -525,6 +472,7 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 				}
 			}
 			
+			
 			//remove unwanted white space and ; 
 			if (e.charCode == 59 && inserted == true) {
 				var  d = ko.views.manager.currentView.document || ko.views.manager.currentView.koDoc,
@@ -548,6 +496,7 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 			}
 			
 			this.removeWhiteSpace = function () {
+				var current_line = scimoz.lineFromPosition(scimoz.currentPos);
 				scimoz.charLeft();
 				if (/\s/.test(scimoz.getWCharAt(scimoz.currentPos))) {
 					scimoz.charRight();
@@ -559,7 +508,7 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 					this.removeWhiteSpace();
 				} else {
 					scimoz.charRight();
-					while (/[\t\s]/.test(scimoz.getWCharAt(scimoz.currentPos).toString())) {
+					while (/[\t\s]/.test(scimoz.getWCharAt(scimoz.currentPos).toString()) && current_line == scimoz.lineFromPosition(scimoz.currentPos)) {
 						scimoz.charRight();
 						scimoz.deleteBackNotLine();
 					}
@@ -572,6 +521,9 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 						case ')':
 							scimoz.charRight();
 							scimoz.deleteBackNotLine();
+							break;
+						default:
+							scimoz.charLeft();
 							break;
 					}
 				}
