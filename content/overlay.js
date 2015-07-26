@@ -300,12 +300,12 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 	}
 	
 	this._strip_comments = function(string) {
-		var patern = /\/\/@import\s*['"][^"';]+['"];|\/\/@import\s*[a-z0-9][^\s\t]+/gi;
+		var patern = /\/\/@import\s*['"][^"';]+['"];|\/\/@import\s*[a-z0-9][^\s\t@]+/gi;
 		return string.toString().replace(patern , '' );
 	}
 	
 	this._split_on_imports = function(cleanless){
-		var patern = /(@import\s*['"][^"';]+['"];|@import\s*[a-z0-9][^\s\t]+)/gi;
+		var patern = /(@import\s*['"][^"';]+['"];|@import\s*[a-z0-9][^\s\t@]+)/gi;
 		return cleanless.split(patern);
 	}
 
@@ -386,7 +386,7 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 		}
 	};
 	
-	this._notifcation = function($message){
+	this._notifcation = function($message, error){
 		$message =$message || false;
 		error = error || false;
 		
@@ -397,7 +397,7 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 		else if (Notification.permission === "granted") {
 		  var options = {
 			body: $message,
-			icon: 'chrome://sass/content/sass-icon.png'
+			icon: icon
 		  }
 		  var n = new Notification('SASS Compiler', options);
 		  setTimeout(n.close.bind(n), 5000); 
@@ -408,7 +408,7 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 			if (permission === "granted") {
 				var options = {
 				   body: $message,
-				   icon: 'chrome://sass/content/sass-icon.png'
+				   icon: icon
 				 }
 				 var n = new Notification('SASS Compiler', options);
 				setTimeout(n.close.bind(n), 5000); 
