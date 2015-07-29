@@ -42,11 +42,13 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 		var d = ko.views.manager.currentView.document || ko.views.manager.currentView.koDoc,
 			file = d.file,
 			buffer = d.buffer,
-			base = file.baseName,
+			base = (file) ? file.fileName : null,
 			path = (file) ? file.URI : null;
 
 		if (!file) {
-			self._log('Please save the file first', konsole.S_ERROR);
+			if (! getVars) {
+				self._log('Please save the file first', konsole.S_ERROR);	
+			}
 			return;  
 		}
 		
@@ -119,7 +121,7 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 		var d = ko.views.manager.currentView.document || ko.views.manager.currentView.koDoc,
 			file = d.file,
 			buffer = d.buffer,
-			base = file.baseName,
+			base = (file) ? file.fileName : null,
 			path = (file) ? file.URI : null;
 			
 		self._log('Compile SASS buffer', konsole.S_SASS);
@@ -159,7 +161,7 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 			d = ko.views.manager.currentView.document || ko.views.manager.currentView.koDoc,
 			file = d.file,
 			fileContent = d.buffer,
-			base = file.baseName,
+			base = (file) ? file.fileName : null,
 			path = (file) ? file.URI : null;
 			
 		self._log('Compiling SASS selection', konsole.S_SASS);
