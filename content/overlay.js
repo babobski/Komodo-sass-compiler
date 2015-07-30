@@ -1,5 +1,3 @@
-// tools for common Komodo extension chores
-xtk.load('chrome://sass/content/toolkit.js');
 // Komodo console in Output Window
 xtk.load('chrome://sass/content/konsole.js');
 xtk.load('chrome://sass/content/sass/sass.js');
