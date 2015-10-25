@@ -1,5 +1,3 @@
-// Komodo console in Output Window
-xtk.load('chrome://sass/content/konsole.js');
 xtk.load('chrome://sass/content/sass/sass.js');
 
 /**
@@ -10,6 +8,7 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 
 (function() {
 	var self = this,
+		notify	= require("notify/notify"),
 		prefs = Components.classes["@mozilla.org/preferences-service;1"]
         .getService(Components.interfaces.nsIPrefService).getBranch("extensions.sass.");
 		
@@ -26,10 +25,7 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 			extensions.sass._onKeyPress, true
 		);
 		
-		ko.views.manager.topView.removeEventListener(
-			'onload',
-			extensions.sass._cleanUp(), true
-		);
+		window.removeEventListener("komodo-post-startup", self._cleanUp, false);
 	}
 		
 	this.compileFile = function(showWarning, compress, getVars) {
@@ -40,12 +36,15 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 		var d = ko.views.manager.currentView.document || ko.views.manager.currentView.koDoc,
 			file = d.file,
 			buffer = d.buffer,
-			base = (file) ? file.fileName : null,
+			base = (file) ? file.baseName : null,
 			path = (file) ? file.URI : null;
 
-		if (!file) {
+		if (!file || !path) {
 			if (! getVars) {
-				self._log('Please save the file first', konsole.S_ERROR);	
+				notify.send(
+					'SASS: Please save the file first',
+					'tools'
+				);	
 			}
 			return;  
 		}
@@ -53,13 +52,11 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 		if (file.ext == '.sass' || file.ext == '.scss') {
 			
 			if (getVars) {
-				self._log('Getting SASS vars', konsole.S_LESS);
-				if (prefs.getBoolPref('showMessages') == false && prefs.getBoolPref('showNotVars')) {
-					self._notifcation('Getting SASS vars');
-				}
-			} else {
-				self._log('Compiling SASS file', konsole.S_SASS);
-			}
+				notify.send(
+					'SASS: Getting SASS vars',
+					'tools'
+				);	
+			} 
 			
 			if (prefs.getBoolPref('useFilewatcher')) {
 				path = prefs.getCharPref('fileWatcher');
@@ -71,15 +68,12 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 			if (getVars) {
 				var allVars = self._getVars(outputSass);
 				sassData.vars = allVars;
-				if (sassData.vars !== undefined) {
-					self._log(sassData.vars, konsole.S_OK);
-				} else {
-					sassData.vars = [ "@No_vars_found" ];
-					if (prefs.getBoolPref('showMessages')) {
-						self._log('No SASS vars found', konsole.S_ERROR);
-					} else {
-						self._notifcation('No SASS vars found', true);
-					}
+				if (sassData.vars === undefined) {
+					sassData.vars = [ "$No_vars_found" ];
+					notify.send(
+						'SASS: No SASS vars found',
+						'tools'
+					);	
 				}
 				
 			} else {
@@ -91,16 +85,15 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 					if (result.status == 0) {
 						var newFilename = path.replace(file.ext, '.css');
 						self._saveFile(newFilename, result.text);
-						self._log('File saved', konsole.S_OK);
-						if (prefs.getBoolPref('showMessages') == false && prefs.getBoolPref('showNotSave')) {
-						self._notifcation( 'SASS File saved');
-					}
+						notify.send(
+							'SASS: File saved',
+							'tools'
+						);	
 					} else {
-						if (prefs.getBoolPref('showMessages')) {
-							self._log('ERROR message ' + result.message, konsole.S_ERROR);
-						} else {
-							self._notifcation(result.message, true);
-						}
+						notify.send(
+							'SASS ERROR: ' + result.message,
+							'tools'
+						);	
 					}
 				});
 			}
@@ -119,12 +112,15 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 		var d = ko.views.manager.currentView.document || ko.views.manager.currentView.koDoc,
 			file = d.file,
 			buffer = d.buffer,
-			base = (file) ? file.fileName : null,
+			base = (file) ? file.baseName : null,
 			path = (file) ? file.URI : null;
 			
-		self._log('Compile SASS buffer', konsole.S_SASS);
-		if (prefs.getBoolPref('showMessages') == false) {
-			self._notifcation('Compile SASS buffer');
+		if (!file || !path) {
+			notify.send(
+				'SASS: Please save the file first',
+				'tools'
+			);	
+			return;  
 		}
 		
 		outputSass = self._process_sass(path, base, buffer, file.ext);
@@ -136,12 +132,15 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 		sass.compile(outputSass, {  style: SassStyle, indentedSyntax: treatAsSass }, function(result){
 			if (result.status == 0) {
 				d.buffer = result.text;
+				notify.send(
+				'SASS: Compiled SASS selection',
+					'tools'
+				);
 			} else {
-				if (prefs.getBoolPref('showMessages')) {
-					self._log('ERROR message ' + result.message, konsole.S_ERROR);
-				} else {
-					self._notifcation(result.message, true);
-				}
+				notify.send(
+					'SASS ERROR: ' + result.message,
+					'tools'
+				);
 			}
 		});
 	};
@@ -159,13 +158,17 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 			d = ko.views.manager.currentView.document || ko.views.manager.currentView.koDoc,
 			file = d.file,
 			fileContent = d.buffer,
-			base = (file) ? file.fileName : null,
+			base = (file) ? file.baseName : null,
 			path = (file) ? file.URI : null;
 			
-		self._log('Compiling SASS selection', konsole.S_SASS);
-		if (prefs.getBoolPref('showMessages') == false) {
-			self._notifcation('Compiling SASS selection');
-		}
+			if (!file || !path) {
+				notify.send(
+					'SASS: Please save the file first',
+					'tools'
+				);	
+				return;  
+			}
+			
 	
 		outputSass = self._process_sass(path, base, text, file.ext);
 		
@@ -177,12 +180,15 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 			if (result.status == 0) {
 				var sass = result.text;
 				scimoz.replaceSel(sass);
+				notify.send(
+				'SASS: Compiled SASS selection',
+					'tools'
+				);
 			} else {
-				if (prefs.getBoolPref('showMessages')) {
-					self._log('ERROR message ' + result.message, konsole.S_ERROR);
-				} else {
-					self._notifcation(result.message, true);
-				}
+				notify.send(
+					'SASS ERROR: ' + result.message,
+					'tools'
+				);
 			}
 		});
 	};
@@ -202,12 +208,10 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 			
 
 		if (!file) {
-			if (prefs.getBoolPref('showMessages')) {
-				self._log('Please save the file first', konsole.S_ERROR);
-			} else {
-				self._notifcation('Please save the file first', true);
-			}
-			
+			notify.send(
+			'SASS: Please save the file first',
+				'tools'
+			);
 			return;  
 		}
 		
@@ -217,16 +221,15 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 			}
 			
 			prefs.setCharPref('fileWatcher', path);
-			self._log('file watcher enabled', konsole.S_OK);
-			if (prefs.getBoolPref('showMessages') == false) {
-				self._notifcation("file watcher enabled");
-			}
+			notify.send(
+			'SASS: file watcher enabled',
+				'tools'
+			);
 		} else {
-			if (prefs.getBoolPref('showMessages')) {
-				self._log('Please select a SASS file', konsole.S_ERROR);
-			} else {
-				self._notifcation('Please save the file first', true);
-			}
+			notify.send(
+			'SASS: Please select a SASS file',
+				'tools'
+			);
 			return;  
 		}
 	}
@@ -237,10 +240,10 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 		}
 		
 		prefs.setCharPref('fileWatcher', '');
-		self._log('file watcher disabled', konsole.S_OK);
-		if (prefs.getBoolPref('showMessages') == false) {
-			self._notifcation("file watcher disabled");
-		}
+		notify.send(
+		'SASS: file watcher disabled',
+			'tools'
+		);
 	}
 	
 	this._process_imports = function(imports, rootPath, fileExt) {
@@ -248,7 +251,7 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 		var buffer = '',
 		newContent = '',
 		matchImports = /(@import\s*['"][^"';]+['"];|@import\s*[a-z0-9][^\s\t]+)/,
-		matchValue = /[a-z0-9][^"]+/i;
+		matchValue = /[a-z0-9][^'"]+/i;
 		
 		if (imports !== -1) {
 			imports.forEach(function(value, i){
@@ -260,13 +263,12 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 					
 					fileName = fileName + fileExt;
 					
-					self._log('@import ' + fileName, konsole.S_CUSTOM);
 					newContent = self._readFile(rootPath,  fileName);
 					buffer = buffer + newContent[0];
 					
 					if (buffer.toString().match(matchImports) !== null) {
-						var cleanLess = self._strip_comments(buffer);
-						newImport = self._split_on_imports(cleanLess);
+						var cleanSass = self._strip_comments(buffer);
+						newImport = self._split_on_imports(cleanSass);
 						buffer = self._process_imports(newImport, newContent[1]);
 					} 
 					
@@ -283,18 +285,18 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 	}
 	
 	this._get_imports = function(content){
-		var cleanLess = self._strip_comments(content), 
-			newImports = self._split_on_imports(cleanLess);
+		var cleanSassCss = self._strip_comments(content), 
+			newImports = self._split_on_imports(cleanSassCss);
 			return newImports;
 	}
 	
 	this._process_sass = function(path, base, buffer, fileExt) {
 		var rootPath = path.replace(base, ''),
-			lessCss = String(buffer),
+			sassCss = String(buffer),
 			SASS = '';
 			
-			less_imports = self._get_imports(lessCss);
-			SASS = self._process_imports(less_imports, rootPath, fileExt);
+			sass_imports = self._get_imports(sassCss);
+			SASS = self._process_imports(sass_imports, rootPath, fileExt);
 			
 			return SASS;
 	}
@@ -304,25 +306,32 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 		return string.toString().replace(patern , '' );
 	}
 	
-	this._split_on_imports = function(cleanless){
+	this._split_on_imports = function(cleansass){
 		var patern = /(@import\s*['"][^"';]+['"];|@import\s*[a-z0-9][^\s\t@]+)/gi;
-		return cleanless.split(patern);
+		return cleansass.split(patern);
 	}
 
 	this._saveFile = function(filepath, filecontent) {
-		self._log('Saving file to ' + filepath, konsole.S_CUSTOM);
-
+		
 		var file = Components
 			.classes["@activestate.com/koFileEx;1"]
 			.createInstance(Components.interfaces.koIFileEx);
-		file.path = filepath;
+		
+		try {
+			file.path = filepath;
+			file.open('w');
 
-		file.open('w');
-
-		file.puts(filecontent);
-		file.close();
+			file.puts(filecontent);
+			file.close();
+		} catch(e){
+			notify.send(
+				'SASS ERROR: Saving file ' + filepath + ', Message: ' + e,
+				'tools'
+			);
+		}
 
 		return;
+        
 	};
 	
 	this._readFile = function (root, filepath, level = 0) {
@@ -369,52 +378,13 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 			reader.close();
 			output[1] = newRoot;
 		} catch(e){
-			if (prefs.getBoolPref('showMessages')) {
-				self._log('ERROR Reading file: ' + fileUrl, konsole.S_ERROR);
-			} else {
-				self._notifcation('ERROR Reading file: ' + fileUrl, true);
-			}
+			notify.send(
+				'SASS ERROR: Reading file: ' + fileUrl,
+				'tools'
+			);
 		}
 		
 		return output;
-	}
-
-	this._log = function(message, style) {
-		if (style == konsole.S_ERROR || prefs.getBoolPref('showMessages')) {
-			konsole.popup();
-			konsole.writeln('[SASS] ' + message, style);
-		}
-	};
-	
-	this._notifcation = function($message, error){
-		$message =$message || false;
-		error = error || false;
-		
-		var icon = error ? 'chrome://sass/content/sass-error-icon.png' : 'chrome://sass/content/sass-icon.png';
-		if (!("Notification" in window)) {
-		  alert("This browser does not support system notifications");
-		}
-		else if (Notification.permission === "granted") {
-		  var options = {
-			body: $message,
-			icon: icon
-		  }
-		  var n = new Notification('SASS Compiler', options);
-		  setTimeout(n.close.bind(n), 5000); 
-		}
-	  
-		else if (Notification.permission !== 'denied') {
-		  Notification.requestPermission(function (permission) {
-			if (permission === "granted") {
-				var options = {
-				   body: $message,
-				   icon: icon
-				 }
-				 var n = new Notification('SASS Compiler', options);
-				setTimeout(n.close.bind(n), 5000); 
-			}
-		  });
-		}
 	}
 	
 	this._getVars = function(buffer){
@@ -422,8 +392,8 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 			allVars,
 			output = [];
 		
-		if (buffer.match(/[$][a-z0-9]+:/i)) {
-			bufferVars = buffer.match(/[$][a-z0-9]+:/gi);
+		if (buffer.match(/\$[a-z0-9]+:/i)) {
+			bufferVars = buffer.match(/\$[a-z0-9]+:/gi);
 			allVars = bufferVars.toString().split(',');
 			
 			allVars.forEach(function(value, i){
@@ -449,7 +419,8 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 	
 	this._cleanUp = function() {
 		if (prefs.getBoolPref('useFilewatcher')) {
-			self.disableFileWatcher();
+			var features = "chrome,titlebar,toolbar,centerscreen,modal";
+			window.openDialog('chrome://sass/content/fileWatcher.xul', "removeFileWatcher", features, self);
 		}
 	}
 	
@@ -473,37 +444,39 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 				file = d.file;
 				
 				if (!file) {
-					if (prefs.getBoolPref('showMessages')) {
-						self._log('Please save the file first', konsole.S_ERROR);
-					} else {
-						self._notifcation('Please save the file first', true);
-					}
+					notify.send(
+					'Please save the file first',
+						'tools'
+					);
 					return;  
 				}
 				
 				if (file.ext == '.sass' || file.ext == '.scss') {
 					var currentLine = scimoz.lineFromPosition(scimoz.currentPos),
 					currentLineStart = scimoz.lineLength(currentLine);
-					e.preventDefault();
-					e.stopPropagation();
-					
-					scimoz.replaceSel('');
-				 
-					if (typeof completions !== 'undefined' && completions.length > 0) {
-						completions = completions.sort();
-					} else {
-						if (prefs.getBoolPref('showMessages')) {
-							self._log("No vars set, going find some!", konsole.S_WARNING);
+					if (currentLineStart > 3) {
+                        e.preventDefault();
+						e.stopPropagation();
+						
+						scimoz.replaceSel('');
+					 
+						if (typeof completions !== 'undefined' && completions.length > 0) {
+							completions = completions.sort();
+						} else {
+							notify.send(
+								'No vars set, going find some!',
+									'tools'
+								);
+							self.getVars();
+							return false;
 						}
-						self.getVars();
-						return false;
-					}
-					scimoz.insertText(scimoz.currentPos, '$');
-					scimoz.charRight();
-					setTimeout(function(){
-						scimoz.autoCShow(1, completions.join(sep));
-						inserted = true;
-					}, 200);
+						scimoz.insertText(scimoz.currentPos, '$');
+						scimoz.charRight();
+						setTimeout(function(){
+							scimoz.autoCShow(1, completions.join(sep));
+							inserted = true;
+						}, 200);
+                    }
 				}
 			}
 			
@@ -531,41 +504,51 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 			}
 			
 			this.removeWhiteSpace = function () {
-				var current_line = scimoz.lineFromPosition(scimoz.currentPos);
-				scimoz.charLeft();
-				if (/\s/.test(scimoz.getWCharAt(scimoz.currentPos))) {
-					scimoz.charRight();
-					scimoz.deleteBackNotLine();
-					scimoz.charLeft();
-				} 
 				
-				if (/\s/.test(scimoz.getWCharAt(scimoz.currentPos))) {
-					this.removeWhiteSpace();
-				} else {
-					scimoz.charRight();
-					while (/[\t\s]/.test(scimoz.getWCharAt(scimoz.currentPos).toString()) && current_line == scimoz.lineFromPosition(scimoz.currentPos)) {
+				scimoz.beginUndoAction()
+				try {
+					var current_line = scimoz.lineFromPosition(scimoz.currentPos);
+					scimoz.charLeft();
+					if (/\s/.test(scimoz.getWCharAt(scimoz.currentPos))) {
 						scimoz.charRight();
 						scimoz.deleteBackNotLine();
-					}
+						scimoz.charLeft();
+					} 
 					
-					switch (scimoz.getWCharAt(scimoz.currentPos).toString()) {
-						case ';':
+					if (/\s/.test(scimoz.getWCharAt(scimoz.currentPos))) {
+						this.removeWhiteSpace();
+					} else {
+						scimoz.charRight();
+						while (/[\t\s]/.test(scimoz.getWCharAt(scimoz.currentPos).toString()) && current_line == scimoz.lineFromPosition(scimoz.currentPos)) {
 							scimoz.charRight();
 							scimoz.deleteBackNotLine();
-							break;
-						case ')':
-							scimoz.charRight();
-							scimoz.deleteBackNotLine();
-							break;
-						default:
-							scimoz.charLeft();
-							break;
+						}
+						
+						currentChar = scimoz.getWCharAt(scimoz.currentPos).toString();
+						switch (currentChar) {
+							case ';':
+								scimoz.charRight();
+								scimoz.deleteBackNotLine();
+								break;
+							case ')':
+								scimoz.charRight();
+								scimoz.deleteBackNotLine();
+								break;
+							case ',':
+								scimoz.charRight();
+								scimoz.deleteBackNotLine();
+								break;
+							default:
+								break;
+						}
 					}
+				} finally {
+					scimoz.endUndoAction()
 				}
 			}
 		};
 		editor_pane.addEventListener('keypress', self._onKeyPress, true);
 	}
 	
-	ko.views.manager.topView.addEventListener('onload', self._cleanUp(), true);
+	window.addEventListener("komodo-post-startup", self._cleanUp, false);
 }).apply(extensions.sass);
