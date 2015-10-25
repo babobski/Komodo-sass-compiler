@@ -8,17 +8,17 @@ a SASS compiler for Komodo Edit/Ide.
 <ul>
 <li><strong><em>Compile Saved File into CSS</em></strong><br>
 takes a .sass or .scss file and creates a .css file with the same name in the same spot as the .sass or .scss file.</li>
-<li><strong><em>Compile Current Buffer</em></strong><br>
+<li><strong><em>Compile Current Buffer <small>(including @imports)</small></em></strong><br>
 into CSS takes the contents of the current buffer and turns it into CSS.</li>
-<li><strong><em>Compile Selection into CSS</em></strong><br> 
+<li><strong><em>Compile Selection into CSS <small>(including @imports)</small></em></strong><br> 
 takes the current selection and turns it into CSS.</li>
 <li><strong><em>Compile and Compress Saved File into CSS</em></strong><br>
 takes a .sass or .scss file and creates a .css file with the same name in the same spot as the .sass or .scss file. The .sass file will be compressed/minified.</li>
-<li><strong><em>Compile and Compress Current Buffer</em></strong><br>
+<li><strong><em>Compile and Compress Current Buffer <small>(including @imports)</small></em></strong><br>
 into CSS takes the contents of the current buffer and turns it into compressed CSS.</li>
-<li><strong><em>Compile and Compress Selection into CSS</em></strong><br> 
+<li><strong><em>Compile and Compress Selection into CSS <small>(including @imports)</small></em></strong><br> 
 takes the current selection and turns it into compressed CSS.</li>
-<li><strong><em>Collect $vars</em></strong><br> 
+<li><strong><em>Collect $vars <small>(including @imports)</small></em></strong><br> 
 collect all the SASS $vars for auto completion.</li>
 <li><strong>File Watcher</strong><ul>
 <li>
@@ -58,7 +58,7 @@ note
 on .scss files the completion box is canceled if you type after the $ (bug)
 </p>
 <p>To set up the auto completion you will have to set 2 macro's the first one is to enable the completion, and the other to get the $vars from your document.<br>
-A known <b>bug</b> is that after insertion white space is added, i created a "fix" if you type <code>;</code> or <code>)</code> the white space is removed and if there is a additional <code>;</code> or <code>)</code> it will be removed (for or Emmet users).<br>
+A known <b>bug</b> is that after insertion white space is added, i created a "fix" if you type <code>;</code> or <code>)</code> or <code>,</code> the white space is removed and if there is a additional <code>;</code> or <code>)</code> or <code>,</code> it will be removed (for or Emmet users).<br>
 for .sass users you can just press enter, and the white space is removed</p>
 <p>The following macro will trigger a custom auto completion box with SASS $vars (trigger after start up).  
 </p>
