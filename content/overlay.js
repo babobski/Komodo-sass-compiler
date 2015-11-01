@@ -4,7 +4,7 @@ xtk.load('chrome://sass/content/sass/sass.js');
  * Namespaces
  */
 if (typeof(extensions) === 'undefined') extensions = {};
-if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.0' };
+if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '1.2.2' };
 
 (function() {
 	var self = this,
@@ -539,6 +539,7 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '2.5.
 								scimoz.deleteBackNotLine();
 								break;
 							default:
+								scimoz.charLeft();
 								break;
 						}
 					}
