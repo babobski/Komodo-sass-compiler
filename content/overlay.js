@@ -4,7 +4,7 @@ xtk.load('chrome://sass/content/sass/sass.js');
  * Namespaces
  */
 if (typeof(extensions) === 'undefined') extensions = {};
-if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '1.2.2' };
+if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '1.2.3' };
 
 (function() {
 	var self = this,
@@ -269,7 +269,7 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = { version : '1.2.
 					if (buffer.toString().match(matchImports) !== null) {
 						var cleanSass = self._strip_comments(buffer);
 						newImport = self._split_on_imports(cleanSass);
-						buffer = self._process_imports(newImport, newContent[1]);
+						buffer = self._process_imports(newImport, newContent[1], fileExt);
 					} 
 					
 				}
