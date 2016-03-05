@@ -1,5 +1,5 @@
 # Komodo-sass-compiler
-Sass/Scss compiler for komodo edit/ide
+Sass/Scss compiler for komodo edit/ide  
 This addon allows you to compile SASS/SCSS files and will give auto completion on the $vars.
 
 ## Usage
