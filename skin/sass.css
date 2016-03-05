@@ -1,0 +1,23 @@
+#sass_wrapper {
+  background-color: #333;
+  border-color: #333;
+  padding: 0;
+  -moz-appearance: none;
+}
+#sass_wrapper #less_auto {
+  max-width: 270px;
+  width: 270px;
+  margin: 0;
+  padding: 0;
+}
+#statusbar-sass #statusbar-sass-label {
+  min-width: 70px;
+}
+#statusbar-sass #statusbar-sass-label > label {
+  background-image: url('../content/komodo-sass.png');
+  background-repeat: no-repeat;
+  background-position: 0px 2px;
+  background-size: auto 16px;
+  padding-left: 30px;
+  padding-right: 10px;
+}

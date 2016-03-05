@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+
+<prefwindow id="sass-filescope-prefs"
+     title="SASS File Scopes"
+	 width="800"
+	 height="850"
+	 xmlns:html="http://www.w3.org/1999/xhtml"
+     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+	<script type="application/x-javascript" src="chrome://sass/content/FileScopes.js" />
+	
+	<prefpane id="sass-filescopes-pane" label="SASS File Scopes">
+		<preferences>
+			<preference id="pref_usefilescope" name="extensions.sass.useFileScopes" type="bool"/>
+			<preference id="pref_outputfile01" name="extensions.sass.outputfile01" type="string"/>
+			<preference id="pref_outputfile02" name="extensions.sass.outputfile02" type="string"/>
+			<preference id="pref_outputfile03" name="extensions.sass.outputfile03" type="string"/>
+			<preference id="pref_includeSass01Folder01" name="extensions.sass.includeSass01Folder01" type="string"/>
+			<preference id="pref_includeSass01Folder02" name="extensions.sass.includeSass01Folder02" type="string"/>
+			<preference id="pref_includeSass01Folder03" name="extensions.sass.includeSass01Folder03" type="string"/>
+			<preference id="pref_includeSass02Folder01" name="extensions.sass.includeSass02Folder01" type="string"/>
+			<preference id="pref_includeSass02Folder02" name="extensions.sass.includeSass02Folder02" type="string"/>
+			<preference id="pref_includeSass02Folder03" name="extensions.sass.includeSass02Folder03" type="string"/>
+			<preference id="pref_includeSass03Folder01" name="extensions.sass.includeSass03Folder01" type="string"/>
+			<preference id="pref_includeSass03Folder02" name="extensions.sass.includeSass03Folder02" type="string"/>
+			<preference id="pref_includeSass03Folder03" name="extensions.sass.includeSass03Folder03" type="string"/>
+		</preferences>
+		
+		<html:p id="error_block" style="display: none; color: #CD0100; font-size: 14px; text-transform: uppercase; font-weight: bold;">
+			
+		</html:p>
+		<checkbox id="useFileScopes" preference="pref_usefilescope" label="Use File Scopes"/>
+		
+		<html:h3>
+			File Scope #01
+		</html:h3>
+		
+		<vbox flex="1" class="scope01">
+            <hbox flex="1">
+                <label control="outputfile01" value="Output File"/>
+                <textbox id="outputfile01" flex="1" preference="pref_outputfile01"/>
+                <button onclick="extensions.sass._selectOutputFile(this)" label="Set Output File" />
+            </hbox>
+            
+            <html:p>
+                <html:strong>
+                    Include SASS folders
+                </html:strong>
+            </html:p>
+            
+            <hbox flex="1">
+                <label control="includeSass01Folder01" value="Include SASS folder #01"/>
+                <textbox id="includeSass01Folder01" flex="1" preference="pref_includeSass01Folder01"/>
+                <button onclick="extensions.sass._selectIncludeFolder(this)" label="Include SASS Folder" />
+            </hbox>
+            
+            <hbox flex="1">
+                <label control="includeSass01Folder02" value="Include SASS folder #02"/>
+                <textbox id="includeSass01Folder02" flex="1" preference="pref_includeSass01Folder02"/>
+                <button onclick="extensions.sass._selectIncludeFolder(this)" label="Include SASS Folder" />
+            </hbox>
+            
+            <hbox flex="1">
+                <label control="includeSass01Folder03" value="Include SASS folder #03"/>
+                <textbox id="includeSass01Folder03" flex="1" preference="pref_includeSass01Folder03"/>
+                <button onclick="extensions.sass._selectIncludeFolder(this)" label="Include SASS Folder" />
+            </hbox>
+            
+			<hbox style="margin-top: 3px;" flex="1">
+				<spacer flex="3"/>
+				<button flex="1" onclick="extensions.sass._clearScope(this)" label="Clear Scope" />
+			</hbox>
+        </vbox>
+		
+		<html:h3>
+			File Scope #02
+		</html:h3>
+		
+		<vbox flex="1" class="scope02">
+            <hbox flex="1">
+                <label control="outputfile02" value="Output File"/>
+                <textbox id="outputfile02" flex="1" preference="pref_outputfile02"/>
+                <button onclick="extensions.sass._selectOutputFile(this)" label="Set Output File" />
+            </hbox>
+            
+            <html:p>
+                <html:strong>
+                    Include SASS folders
+                </html:strong>
+            </html:p>
+            
+            <hbox flex="1">
+                <label control="includeSass02Folder01" value="Include SASS folder #01"/>
+                <textbox id="includeSass02Folder01" flex="1" preference="pref_includeSass02Folder01"/>
+                <button onclick="extensions.sass._selectIncludeFolder(this)" label="Include SASS Folder" />
+            </hbox>
+            
+            <hbox flex="1">
+                <label control="includeSass02Folder02" value="Include SASS folder #02"/>
+                <textbox id="includeSass02Folder02" flex="1" preference="pref_includeSass02Folder02"/>
+                <button onclick="extensions.sass._selectIncludeFolder(this)" label="Include SASS Folder" />
+            </hbox>
+            
+            <hbox flex="1">
+                <label control="includeSass02Folder03" value="Include SASS folder #03"/>
+                <textbox id="includeSass02Folder03" flex="1" preference="pref_includeSass02Folder03"/>
+                <button onclick="extensions.sass._selectIncludeFolder(this)" label="Include SASS Folder" />
+            </hbox>
+			
+			<hbox style="margin-top: 3px;" flex="1">
+				<spacer flex="3"/>
+				<button flex="1" onclick="extensions.sass._clearScope(this)" label="Clear Scope" />
+			</hbox>
+        </vbox>
+		
+		<html:h3>
+			File Scope #03
+		</html:h3>
+		
+		<vbox flex="1" class="scope03">
+			
+            <hbox flex="1">
+                <label control="outputfile03" value="Output File"/>
+                <textbox id="outputfile03" flex="1" preference="pref_outputfile03"/>
+                <button onclick="extensions.sass._selectOutputFile(this)" label="Set Output File" />
+            </hbox>
+            
+            <html:p>
+                <html:strong>
+                    Include SASS folders
+                </html:strong>
+            </html:p>
+            
+            <hbox flex="1">
+                <label control="includeSass03Folder01" value="Include SASS folder #01"/>
+                <textbox id="includeSass03Folder01" flex="1" preference="pref_includeSass03Folder01"/>
+                <button onclick="extensions.sass._selectIncludeFolder(this)" label="Include SASS Folder" />
+            </hbox>
+            
+            <hbox flex="1">
+                <label control="includeSass03Folder02" value="Include SASS folder #02"/>
+                <textbox id="includeSass03Folder02" flex="1" preference="pref_includeSass03Folder02"/>
+                <button onclick="extensions.sass._selectIncludeFolder(this)" label="Include SASS Folder" />
+            </hbox>
+            
+            <hbox flex="1">
+                <label control="includeSass03Folder03" value="Include SASS folder #03"/>
+                <textbox id="includeSass03Folder03" flex="1" preference="pref_includeSass03Folder03"/>
+                <button onclick="extensions.sass._selectIncludeFolder(this)" label="Include SASS Folder" />
+            </hbox>
+			
+			<hbox style="margin-top: 3px;" flex="1">
+				<spacer flex="3"/>
+				<button flex="1" onclick="extensions.sass._clearScope(this)" label="Clear Scope" />
+			</hbox>
+			
+        </vbox>
+			
+	</prefpane>
+
+</prefwindow>

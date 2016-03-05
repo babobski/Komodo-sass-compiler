@@ -1,3 +1,6 @@
 content sass content/
 overlay chrome://komodo/content/komodo.xul chrome://sass/content/overlay.xul
 #overlay chrome://komodo/content/pref/pref-html.xul chrome://sass/content/pref-overlay.xul
+skin sass classic/1.0 skin/
+component {98d1aebb-2e53-4e9a-be5d-f9d696bde709} components/sass_autocomplete.js
+contract @mozilla.org/autocomplete/search;1?name=sass-autocomplete {98d1aebb-2e53-4e9a-be5d-f9d696bde709}
