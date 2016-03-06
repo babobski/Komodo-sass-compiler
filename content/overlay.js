@@ -412,6 +412,24 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 		);
 	}
 	
+	this.enableFilescopes = function() {
+		prefs.setBoolPref('useFileScopes', true);
+		self._updateStatusBar();
+		notify.send(
+			'SASS: File scopes Enabled',
+			'tools'
+		);
+	}
+
+	this.disableFileScopes = function() {
+		prefs.setBoolPref('useFileScopes', false);
+		self._updateStatusBar();
+		notify.send(
+			'SASS: File scopes disabled',
+			'tools'
+		);
+	}
+	
 	this._process_imports = function(imports, rootPath, fileExt) {
 		
 		var buffer = '',
@@ -425,9 +443,11 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 				var file = value;
 				if (file.match(matchImports) !== null) {
 					
-					var fileName = file.replace(/(@import\s|["';]+)/gi, ''),
+					var fileName = file.replace(/(@import\s|["';]+)/gi, '');
 					
-					fileName = fileName + fileExt;
+					if (/(.sass|.scss)$/i.test(fileName) == false) {
+						fileName = fileName + fileExt;
+					}
 					
 					newContent = self._readFile(rootPath, fileName);
 					buffer = buffer + newContent[0];
@@ -932,6 +952,7 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 				enableDisable = document.createElement('menuitem'),
 				fileWatcherItem = document.createElement('menuitem'),
 				settingsItem = document.createElement('menuitem'),
+				fileScopesEnable = document.createElement('menuitem'),
 				fileScopes = document.createElement('menuitem');
 
 			if (!compileEnabled) {
@@ -949,6 +970,14 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 				fileWatcherItem.setAttribute('label', 'Enable File Watcher');
 				fileWatcherItem.setAttribute('oncommand', 'extensions.sass.enableFileWatcher();');
 			}
+			
+			if (prefs.getBoolPref('useFileScopes')) {
+				fileScopesEnable.setAttribute('label', 'Disable File Scopes');
+				fileScopesEnable.setAttribute('oncommand', 'extensions.sass.disableFileScopes();');
+			} else {
+				fileScopesEnable.setAttribute('label', 'Enable File Scopes');
+				fileScopesEnable.setAttribute('oncommand', 'extensions.sass.enableFilescopes();');
+			}
 
 			fileScopes.setAttribute('label', 'File Scopes'),
 				fileScopes.setAttribute('oncommand', 'extensions.sass.OpenSassFileScopes();');
@@ -958,6 +987,7 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 
 			menu.appendChild(enableDisable);
 			menu.appendChild(fileWatcherItem);
+			menu.appendChild(fileScopesEnable);
 			menu.appendChild(fileScopes);
 			menu.appendChild(settingsItem);
 
