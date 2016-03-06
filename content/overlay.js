@@ -988,6 +988,10 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 		var editor_pane = ko.views.manager.topView;
 
 		this._onKeyPress = function(e) {
+			if (!editor_pane.currentView) {
+				return;
+			}
+			
 			var scimoz = ko.views.manager.currentView.scimoz;
 			if (e.shiftKey && e.charCode == 36) {
 				var d = ko.views.manager.currentView.document || ko.views.manager.currentView.koDoc,
