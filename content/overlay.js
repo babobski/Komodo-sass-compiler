@@ -522,23 +522,21 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 	
 	this._readFile = function(root, filepath, prefix = false) {
 
-		var fileUrl,
-			fileName,
+		var fileName,
 			fullUrl = root + filepath,
+			fileUrl = self._parse_uri(fullUrl),
 			newRoot = '',
-			backPatern = /(\.\.\/|\.\.\\)+/;
+			backPatern = /\.\.\/+/;
 
 		//figure out ftp path if ../ in path
 		if (filepath.search(backPatern) !== -1) {
 
-			var output = self._parse_backDirectories(fullUrl, root, filepath),
+			var output = self._parse_backDirectories(fullUrl, filepath, root),
 				fileName = output.fileName,
 				fileUrl = output.fileUrl;
 
 		} else {
 			var fileName = '';
-
-			fileUrl = self._parse_uri(fullUrl);
 			fileName = fileUrl.substring(self._last_slash(fileUrl) + 1, fileUrl.length);
 		}
 
@@ -632,24 +630,23 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 
 		return false;
 	}
-
-	this._parse_backDirectories = function(fullUrl, root, filepath) {
+	
+	this._parse_backDirectories = function(fullUrl, filePath, root) {
 		var url = self._parse_uri(fullUrl),
-			urlParts = /\\/.test(root) ? root.split('\\') : root.split('/'),
-			backDirectories = url.match(/(\.\.\/|\.\.\\)/g).length,
-			fileName = filepath.toString().replace(/(\.\.\/|\.\.\\)+/, ''),
-			$index = parseFloat(root.match(/(\/|\\)/g).length) - parseFloat(backDirectories),
-			result = '',
-			slash = /\\/.test(fullUrl) ? '\\' : '\/';
-
-		for (index = 0; index < $index; ++index) {
-			result = result + urlParts[index] + slash;
+			backDirectorys = filePath.match(/\.\.\//g),
+			fileName = url.substr(self._last_slash(url) + 1, url.length),
+			fileBase = filePath.replace(/\.\.\//g, '');
+			base = root;
+			
+		for (var x = 0; x < backDirectorys.length + 1; x++) {
+			base = base.substr(0, self._last_slash(base));
+			if (x === backDirectorys.length) {
+				base = base + '/';
+			}
 		}
-
-		fileUrl = result.toString() + fileName;
-
+		
 		return {
-			fileUrl: fileUrl,
+			fileUrl: base + fileBase,
 			fileName: fileName
 		};
 	}
