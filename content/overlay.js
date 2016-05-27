@@ -5,7 +5,7 @@ xtk.load('chrome://sass/content/sass/sass.js');
  */
 if (typeof(extensions) === 'undefined') extensions = {};
 if (typeof(extensions.sass) === 'undefined') extensions.sass = {
-	version: '2.0'
+	version: '2.1'
 };
 (function() {
 	var notify = require("notify/notify"),
@@ -62,10 +62,7 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 
 		if (file.ext == '.sass' || file.ext == '.scss') {
 			if (getVars) {
-				notify.send(
-					'SASS: Getting SASS vars',
-					'tools'
-				);	
+				self._notifcation('SASS: Getting LESS vars');
 			} 
 		
 			outputSass = self._process_sass(path, base, buffer, file.ext);
@@ -74,10 +71,7 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 				sassData.vars = allVars;
 				if (sassData.vars === undefined) {
 					sassData.vars = [ "$No_vars_found" ];
-					notify.send(
-						'SASS: No SASS vars found',
-						'tools'
-					);	
+					self._notifcation('SASS: No SASS vars found');
 				}
 				
 			} else {
@@ -89,16 +83,10 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 					if (result.status == 0) {
 						var newFilename = path.replace(file.ext, '.css');
 						self._saveFile(newFilename, result.text);
-						notify.send(
-							'SASS: File saved',
-							'tools'
-						);
+						self._notifcation('SASS: File saved');
 						self._updateStatusBar();
 					} else {
-						notify.send(
-							'SASS ERROR: ' + result.message,
-							'tools'
-						);
+						self._notifcation('SASS ERROR: ' + result.message, true);
 						self._updateStatusBar('SASS ERROR: ' + result.message);
 						console.error('SASS ERROR: ' + result.formatted);
 					}
@@ -123,10 +111,7 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 			path = (file) ? file.URI : null;
 			
 		if (!file || !path) {
-			notify.send(
-				'SASS: Please save the file first',
-				'tools'
-			);	
+			self._notifcation('SASS: Please save the file first', true);
 			return;  
 		}
 		
@@ -139,16 +124,10 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 		sass.compile(outputSass, {  style: SassStyle, indentedSyntax: treatAsSass }, function(result){
 			if (result.status == 0) {
 				d.buffer = result.text;
-				notify.send(
-				'SASS: Compiled SASS selection',
-					'tools'
-				);
+				self._notifcation('SASS: Compiled SASS buffer');
 				self._updateStatusBar();
 			} else {
-				notify.send(
-					'SASS ERROR: ' + result.message,
-					'tools'
-				);
+				self._notifcation('SASS ERROR: ' + result.message, true);
 				self._updateStatusBar('SASS ERROR: ' + result.message);
 				console.error('SASS ERROR: ' + result.formatted);
 			}
@@ -172,10 +151,7 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 			path = (file) ? file.URI : null;
 			
 			if (!file || !path) {
-				notify.send(
-					'SASS: Please save the file first',
-					'tools'
-				);	
+				self._notifcation('SASS: Please save the file first', true);	
 				return;  
 			}
 			
@@ -190,16 +166,10 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 			if (result.status == 0) {
 				var sass = result.text;
 				scimoz.replaceSel(sass);
-				notify.send(
-				'SASS: Compiled SASS selection',
-					'tools'
-				);
+				self._notifcation('SASS: Compiled SASS selection');
 				self._updateStatusBar();
 			} else {
-				notify.send(
-					'SASS ERROR: ' + result.message,
-					'tools'
-				);
+				self._notifcation('SASS ERROR: ' + result.message, true);
 				self._updateStatusBar('SASS ERROR: ' + result.message);
 				console.error('SASS ERROR: ' + result.formatted);
 			}
@@ -353,10 +323,7 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 			
 
 		if (!file) {
-			notify.send(
-			'SASS: Please save the file first',
-				'tools'
-			);
+			self._notifcation('SASS: Please save the file first', true);
 			return;  
 		}
 		
@@ -366,16 +333,10 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 			}
 			
 			prefs.setCharPref('fileWatcher', path);
-			notify.send(
-			'SASS: file watcher enabled',
-				'tools'
-			);
+			self._notifcation('SASS: file watcher enabled');
 			self._updateStatusBar();
 		} else {
-			notify.send(
-			'SASS: Please select a SASS file',
-				'tools'
-			);
+			self._notifcation('SASS: Please select a SASS file', true);
 			self._updateStatusBar('SASS: Please select a SASS file');
 			return;  
 		}
@@ -387,47 +348,32 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 		}
 		
 		prefs.setCharPref('fileWatcher', '');
-		notify.send(
-			'SASS: file watcher disabled',
-			'tools'
-		);
+		self._notifcation('SASS: file watcher disabled');
 		self._updateStatusBar();
 	}
 	
 	this.enableCompiler = function() {
 		prefs.setBoolPref('compilerEnabled', true);
+		self._notifcation('SASS: Compiler Enabled');
 		self._updateStatusBar();
-		notify.send(
-			'SASS: Compiler Enabled',
-			'tools'
-		);
 	}
 
 	this.disableCompiler = function() {
 		prefs.setBoolPref('compilerEnabled', false);
+		self._notifcation('SASS: Compiler disabled');
 		self._updateStatusBar();
-		notify.send(
-			'SASS: Compiler disabled',
-			'tools'
-		);
 	}
 	
 	this.enableFilescopes = function() {
 		prefs.setBoolPref('useFileScopes', true);
+		self._notifcation('SASS: File scopes Enabled');
 		self._updateStatusBar();
-		notify.send(
-			'SASS: File scopes Enabled',
-			'tools'
-		);
 	}
 
 	this.disableFileScopes = function() {
 		prefs.setBoolPref('useFileScopes', false);
+		self._notifcation('SASS: File scopes disabled');
 		self._updateStatusBar();
-		notify.send(
-			'SASS: File scopes disabled',
-			'tools'
-		);
 	}
 	
 	this._process_imports = function(imports, rootPath, fileExt) {
@@ -510,10 +456,7 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 			file.puts(filecontent);
 			file.close();
 		} catch(e){
-			notify.send(
-				'SASS ERROR: Saving file ' + filepath + ', Message: ' + e,
-				'tools'
-			);
+			self._notifcation('SASS ERROR: Saving file ' + filepath + ', Message: ' + e, true);
 		}
 
 		return;
@@ -570,10 +513,7 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 			if (prefix === false) {
 				output = self._readFile(root, filepath, true);
 			} else {
-				notify.send(
-					'SASS ERROR: Reading file: ' + fileUrl,
-					'tools'
-				);
+				self._notifcation('SASS ERROR: Reading file: ' + fileUrl, true);
 				self._updateStatusBar('SASS ERROR: Reading file: ' + fileUrl);
 				console.error(e.message);
 			}
@@ -694,19 +634,9 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 	}
 
 	this._cleanUp = function() {
-
-		if (prefs.getBoolPref('showWarning')) {
-			var features = "chrome,titlebar,toolbar,centerscreen";
-			window.openDialog('chrome://sass/content/upgradeWarning.xul', "sassWarning", features);
-
-			prefs.setBoolPref('showWarning', false);
-		}
-
+		
 		if (prefs.getBoolPref('useFilewatcher') && !prefs.getBoolPref('useFileScopes')) {
-			notify.send(
-				'SASS: File watcher is still enabled form last session or is enabled in a other window.',
-				'tools'
-			);
+			self._notifcation('SASS: File watcher is still enabled form last session or is enabled in a other window.');
 		}
 	}
 
@@ -716,6 +646,18 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 			search = false;
 		}
 	}
+	
+	this.addPanel = function(){
+		ko.views.manager.currentView.setFocus();
+		var view 	= $(require("ko/views").current().get()),
+		SASSpanel	= $("<statusbarpanel id='statusbar-sass' />");
+		
+		if (view === undefined) {
+			return;
+ 		}
+		
+		view.findAnonymous("anonid", "statusbar-encoding").before(SASSpanel);
+ 	}
 
 	this._updateView = function() {
 		var wrapper = $('#sass_wrapper');
@@ -728,28 +670,31 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 
 	this._calculateXpos = function() {
 		var currentWindowPos = editor.getCursorWindowPosition(),
-			windowX = +currentWindowPos['x'],
+			windowX =+ currentWindowPos['x'],
+			newToolbar = window.top.document.getElementById('toolbox_side').clientWidth;
 			leftSidebarWith = +window.top.document.getElementById('workspace_left_area').clientWidth;
 
-		return windowX - leftSidebarWith;
+		return windowX - (leftSidebarWith + newToolbar);
 	}
 
 	this._calculateYpos = function() {
 		var currentWindowPos = editor.getCursorWindowPosition(),
-			windowY = +currentWindowPos['y'],
+			view = $(require("ko/views").current().get()),
+			windowY =+ currentWindowPos['y'],
 			docH = +document.height,
-			adjustY = +prefs.getIntPref('tooltipY'),
+			adjustY =+ prefs.getIntPref('tooltipY'),
 			leftH = +window.top.document.getElementById('workspace_left_area').clientHeight, //left pane
 			menuH = +window.top.document.getElementById('toolbox_main').clientHeight, // top menu
 			tabs = window.top.document.getElementById('tabbed-view')._tabs,
 			tabsH = +tabs.clientHeight, //tabs height
 			tabsT = +tabs.clientTop, //tabs ofsset top
+			breadcrumbBar = view.findAnonymous("anonid", "breadcrumbBarWrap"), // breadcrumbbar 
+			breadcrumbBarH =+ breadcrumbBar._elements[0].clientHeight, 
 			preCalc = docH - leftH + 1,
-			topCalc = menuH + tabsH + preCalc + tabsT;
+			topCalc = (menuH + breadcrumbBarH + preCalc) - ( tabsH + tabsT );
 
 		topCalc = topCalc + adjustY;
-
-
+		
 		return windowY - topCalc;
 	}
 
@@ -816,10 +761,7 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 		}
 
 		if (typeof completions === 'undefined') {
-			notify.send(
-				'No vars set, going find some!',
-				'tools'
-			);
+			self._notifcation('No vars set, going find some!');
 			self._getVars();
 			return false;
 		}
@@ -839,8 +781,7 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 		message = message || false;
 		error = error || false;
 		var label = 'Compiler Enabled',
-			compileEnabled = prefs.getBoolPref('compilerEnabled'),
-			attachTo = $("#statusbar-encoding");
+			compileEnabled = prefs.getBoolPref('compilerEnabled');
 
 		if (ko.views.manager.currentView == 'undefined') {
 			return false;
@@ -859,6 +800,7 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 			}
 
 			$("#statusbar-sass").remove();
+			self.addPanel();
 
 			if (prefs.getBoolPref('useFileScopes')) {
 				var path = 'Outside file scope',
@@ -938,13 +880,7 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 			if (!compileEnabled) {
 				label = 'Compiler Disabled';
 			}
-
-			var statPanel = document.createElement('statusbarpanel');
-
-			statPanel.setAttribute('id', 'statusbar-sass');
-			statPanel.setAttribute('tooltiptext', 'SASS Settings');
-
-			attachTo.before(statPanel);
+			
 			var menu = document.createElement('menupopup'),
 				enableDisable = document.createElement('menuitem'),
 				fileWatcherItem = document.createElement('menuitem'),
@@ -999,6 +935,11 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 			button.setAttribute('persist', 'buttonstyle');
 			button.setAttribute('buttonstyle', 'text');
 			button.setAttribute('label', label);
+			
+			if (panel.length === 0){		
+				self.addPanel();		
+				panel = document.getElementById('statusbar-sass');		
+			}
 
 			panel.appendChild(button);
 
@@ -1025,10 +966,7 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 					file = d.file;
 
 				if (!file) {
-					notify.send(
-						'Please save the file first',
-						'tools'
-					);
+					self._notifcation('Please save the file first', true);
 					return;
 				}
 
@@ -1054,6 +992,47 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 
 		editor_pane.addEventListener('keypress', self._onKeyPress, true);
 	}
+	
+	this._notifcation = function($message, error){
+		$message =$message || false;
+		error = error || false;
+		var msgType = prefs.getCharPref('msgType');
+		
+		if (msgType === 'web-notifications') {
+			var icon = error ? 'chrome://sass/content/sass-error-icon.png' : 'chrome://sass/content/sass-icon.png';
+			if (!("Notification" in window)) {
+			  alert("This browser does not support system notifications");
+			}
+		  
+			else if (Notification.permission === "granted") {
+			  var options = {
+				body: $message,
+				icon: icon
+			  }
+			  var n = new Notification('SASS Compiler', options);
+			  setTimeout(n.close.bind(n), 5000); 
+			}
+		  
+			else if (Notification.permission !== 'denied') {
+			  Notification.requestPermission(function (permission) {
+				if (permission === "granted") {
+					var options = {
+					   body: $message,
+					   icon: icon
+					 }
+					 var n = new Notification('SASS Compiler', options);
+					setTimeout(n.close.bind(n), 5000); 
+				}
+			  });
+			}
+		} else {
+			notify.send(
+					$message,
+					'tools'
+			);
+		}
+	}
+	
 	var features = "chrome,titlebar,toolbar,centerscreen";
 	this.OpenSassSettings = function() {
 		window.openDialog('chrome://sass/content/pref-overlay.xul', "sassSettings", features);

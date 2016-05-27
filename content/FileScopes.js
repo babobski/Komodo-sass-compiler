@@ -1,6 +1,6 @@
 if (typeof(extensions) === 'undefined') extensions = {};
 if (typeof(extensions.sass) === 'undefined') extensions.sass = {
-	version: '2.0'
+	version: '2.1'
 };
 
 (function() {
