@@ -12,7 +12,7 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 		overlay = self.overlay;
 
 
-	if (!('sass' in ko)) ko.extensions = {};
+	if (!('extensions' in ko)) ko.extensions = {};
 	var myExt = "SassCompiler@komodoeditide.com";
 	if (!(myExt in ko.extensions)) ko.extensions[myExt] = {};
 	if (!('myapp' in ko.extensions[myExt])) ko.extensions[myExt].myapp = {};
