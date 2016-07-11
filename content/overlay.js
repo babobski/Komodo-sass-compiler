@@ -5,7 +5,7 @@ xtk.load('chrome://sass/content/sass/sass.js');
  */
 if (typeof(extensions) === 'undefined') extensions = {};
 if (typeof(extensions.sass) === 'undefined') extensions.sass = {
-	version: '2.3'
+	version: '2.4'
 };
 (function() {
 	var notify = require("notify/notify"),
@@ -671,10 +671,15 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 	this._calculateXpos = function() {
 		var currentWindowPos = editor.getCursorWindowPosition(),
 			windowX =+ currentWindowPos['x'],
-			newToolbar = window.top.document.getElementById('toolbox_side').clientWidth;
-			leftSidebarWith = +window.top.document.getElementById('workspace_left_area').clientWidth;
-
-		return windowX - (leftSidebarWith + newToolbar);
+			newToolbar = window.top.document.getElementById('toolbox_side'),
+			leftSidebarWith =+ window.top.document.getElementById('workspace_left_area').clientWidth,
+			totalLeftSidebarWidth =+ leftSidebarWith;
+			
+			if (newToolbar !== null) {
+				totalLeftSidebarWidth = totalLeftSidebarWidth + newToolbar.clientWidth;
+			}
+			
+		return windowX - totalLeftSidebarWidth;
 	}
 
 	this._calculateYpos = function() {
@@ -700,6 +705,7 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 
 	insertSassVar = function() {
 		var scimoz = ko.views.manager.currentView.scimoz,
+			currentLine =  scimoz.lineFromPosition(scimoz.currentPos),
 			input = $('#sass_auto');
 
 		if (input.length > 0) {
@@ -711,6 +717,15 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 			}
 			input.parent().remove();
 			ko.views.manager.currentView.setFocus();
+			
+			setTimeout(function(){
+				if (scimoz.lineFromPosition(scimoz.currentPos) > currentLine) {
+					scimoz.homeExtend();
+					scimoz.charLeftExtend();
+					scimoz.replaceSel('');
+				}
+				
+			}, 50);
 		}
 	}
 
