@@ -4,18 +4,20 @@
 <overlay id="sass" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 	<script type="application/x-javascript" src="chrome://sass/content/overlay.js" />
 
-    <commandset id="allcommands">
-	  <command id="Tasks:SassCompileFile" oncommand="extensions.sass.compileFile(true);"/>
-      <command id="Tasks:SassCompileBuffer" oncommand="extensions.sass.compileBuffer();"/>
-      <command id="Tasks:SassCompileSelection" oncommand="extensions.sass.compileSelection();"/>
-	  <command id="Tasks:SassCompileFileCompress" oncommand="extensions.sass.compileCompressFile(true);"/>
-      <command id="Tasks:SassCompileBufferCompress" oncommand="extensions.sass.compileCompressBuffer();"/>
-      <command id="Tasks:SassCompileSelectionCompress" oncommand="extensions.sass.compileCompressSelection();"/>
-	  <command id="Tasks:SassEnableFileWatcher" oncommand="extensions.sass.enableFileWatcher();"/>
-	  <command id="Tasks:SassDisableFileWatcher" oncommand="extensions.sass.disableFileWatcher();"/>
-	  <command id="Tasks:SassCollectVars" oncommand="extensions.sass.getVars();"/>
-	  <command id="Tasks:SassSettings" oncommand="extensions.sass.OpenSassSettings();"/>
-    </commandset>
+	<commandset id="allcommands">
+		<command id="Tasks:SassCompileFile" oncommand="extensions.sass.compileFile(true);"/>
+		<command id="Tasks:SassCompileBuffer" oncommand="extensions.sass.compileBuffer();"/>
+		<command id="Tasks:SassCompileSelection" oncommand="extensions.sass.compileSelection();"/>
+		<command id="Tasks:SassCompileFileCompress" oncommand="extensions.sass.compileCompressFile(true);"/>
+		<command id="Tasks:SassCompileBufferCompress" oncommand="extensions.sass.compileCompressBuffer();"/>
+		<command id="Tasks:SassCompileSelectionCompress" oncommand="extensions.sass.compileCompressSelection();"/>
+		<command id="Tasks:SassEnableFileWatcher" oncommand="extensions.sass.enableFileWatcher();"/>
+		<command id="Tasks:SassDisableFileWatcher" oncommand="extensions.sass.disableFileWatcher();"/>
+		<command id="Tasks:SassEnableFileScopes" oncommand="extensions.sass.enableFileScopes();"/>
+		<command id="Tasks:SassDisableFileScopes" oncommand="extensions.sass.disableFileScopes();"/>
+		<command id="Tasks:SassCollectVars" oncommand="extensions.sass.getVars();"/>
+		<command id="Tasks:SassSettings" oncommand="extensions.sass.OpenSassSettings();"/>
+	</commandset>
 
 
     <menupopup id="popup_tools">
@@ -63,14 +65,28 @@
 					class="menu-iconic-wide">
 				</menuitem>
 			</menupopup>
-		  </menu>
-		  <menuitem id="menu_sass_settings"
-                  label="Sass Settings"
-                  observes="Tasks:SassSettings"
-                  class="menu-iconic-wide" />
-        </menupopup>
-      </menu>
-    </menupopup>
+			</menu>
+			<menu id="menu_filescopes" label="File Scopes">
+			<menupopup id="menu_filescopes_popup">
+				<menuitem id="menu_filescopes_enable"
+					label="Enable File Scopes"
+					observes="Tasks:SassEnableFileScopes"
+					class="menu-iconic-wide">
+				</menuitem>
+				<menuitem id="menu_filescopes_disable"
+					label="Disable File Scopes"
+					observes="Tasks:SassDisableFileScopes"
+					class="menu-iconic-wide">
+				</menuitem>
+			</menupopup>
+			</menu>
+			<menuitem id="menu_sass_settings"
+					label="Sass Settings"
+					observes="Tasks:SassSettings"
+					class="menu-iconic-wide" />
+		</menupopup>
+		</menu>
+	</menupopup>
 
     <menupopup id="editorContextMenu">
       <menu id="menu_sass_context" label="SASS">
@@ -117,8 +133,22 @@
 						class="menu-iconic-wide">
 					</menuitem>
 				</menupopup>
-			  </menu>
-          </menupopup>
-      </menu>
-    </menupopup>
+				</menu>
+				<menu id="menu_filescopes_contect-menu" label="File Scopes">
+					<menupopup id="menu_filescopes_contect-menu_popup">
+						<menuitem id="menu_filescopes_contect-menu_enable"
+							label="Enable File Scopes"
+							observes="Tasks:SassEnableFileScopes"
+							class="menu-iconic-wide">
+						</menuitem>
+						<menuitem id="menu_filescopes_contect-menu_disable"
+							label="Disable File Scopes"
+							observes="Tasks:SassDisableFileScopes"
+							class="menu-iconic-wide">
+						</menuitem>
+					</menupopup>
+				</menu>
+			</menupopup>
+		</menu>
+	</menupopup>
 </overlay>

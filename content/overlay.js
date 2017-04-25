@@ -1,4 +1,5 @@
 xtk.load('chrome://sass/content/sass/sass.js');
+xtk.load('chrome://sass/content/helper.js');
 
 /**
  * Namespaces
@@ -12,19 +13,21 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 		$ = require("ko/dom"),
 		self = this,
 		search = false,
+		notification = false,
 		editor = require("ko/editor"),
+		parse = ko.uriparse,
+		helper = new Helper(),
 		prefs = Components.classes["@mozilla.org/preferences-service;1"]
 		.getService(Components.interfaces.nsIPrefService).getBranch("extensions.sass.");
 
 
-	if (!('extensions' in ko)) ko.extensions = {};
+	if (!('extensions' in	ko)) ko.extensions = {};
 	var myExt = "SassCompiler@komodoeditide.com";
 	if (!(myExt in ko.extensions)) ko.extensions[myExt] = {};
 	if (!('myapp' in ko.extensions[myExt])) ko.extensions[myExt].myapp = {};
 	var sassData = ko.extensions[myExt].myapp;
-	
-	if (extensions.sass && extensions.sass.onKeyPress)
-	{
+
+	if (extensions.sass && extensions.sass.onKeyPress) {
 		ko.views.manager.topView.removeEventListener(
 			'keypress',
 			extensions.sass._onKeyPress, true
@@ -44,25 +47,30 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 		compress = compress || false;
 		getVars = getVars || false;
 
-		var d = ko.views.manager.currentView.document || ko.views.manager.currentView.koDoc,
-			fileContent = self._getContent(d),
-			file = fileContent.file,
-			buffer = fileContent.buffer,
-			base = fileContent.base,
-			path = fileContent.path,
-			compilerEnabled = prefs.getBoolPref('compilerEnabled');
-
-		if (!compilerEnabled && !getVars) {
-			return;
+		var d = ko.views.manager.currentView.document || ko.views.manager.currentView.koDoc;
+		if (d === null || d.file === null) {
+			return false;
 		}
-
-		if (!file || !path) {
-			return;
-		}
-
-		if (file.ext == '.sass' || file.ext == '.scss') {
+		
+		var fileExt = d.file.ext;
+		if (fileExt == '.sass' || fileExt == '.scss') {
+			var	fileContent = self._getContent(d, getVars),
+				file = fileContent.file,
+				buffer = fileContent.buffer,
+				base = fileContent.base,
+				path = fileContent.path,
+				compilerEnabled = prefs.getBoolPref('compilerEnabled');
+	
+			if (!compilerEnabled && !getVars) {
+				return;
+			}
+	
+			if (!file || !path) {
+				return;
+			}
+		
 			if (getVars) {
-				self._notifcation('SASS: Getting LESS vars');
+				self._notifcation('SASS: Getting SASS vars');
 			} 
 		
 			outputSass = self._process_sass(path, base, buffer, file.ext);
@@ -79,7 +87,7 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 				SassStyle = compress == true ? Sass.style.compressed : Sass.style.nested;
 				treatAsSass = file.ext == '.sass' ? true : false;
 				
-				sass.compile(outputSass, {  style: SassStyle, indentedSyntax: treatAsSass }, function(result){
+				sass.compile(outputSass, {	style: SassStyle, indentedSyntax: treatAsSass, comments: false }, function(result){
 					if (result.status == 0) {
 						var newFilename = path.replace(file.ext, '.css');
 						self._saveFile(newFilename, result.text);
@@ -112,7 +120,7 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 			
 		if (!file || !path) {
 			self._notifcation('SASS: Please save the file first', true);
-			return;  
+			return;	
 		}
 		
 		outputSass = self._process_sass(path, base, buffer, file.ext);
@@ -121,7 +129,7 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 		SassStyle = compress == true ? Sass.style.compressed : Sass.style.nested;
 		treatAsSass = file.ext == '.sass' ? true : false;
 		
-		sass.compile(outputSass, {  style: SassStyle, indentedSyntax: treatAsSass }, function(result){
+		sass.compile(outputSass, {	style: SassStyle, indentedSyntax: treatAsSass }, function(result){
 			if (result.status == 0) {
 				d.buffer = result.text;
 				self._notifcation('SASS: Compiled SASS buffer');
@@ -152,7 +160,7 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 			
 			if (!file || !path) {
 				self._notifcation('SASS: Please save the file first', true);	
-				return;  
+				return;	
 			}
 			
 	
@@ -162,7 +170,7 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 		SassStyle = compress == true ? Sass.style.compressed : Sass.style.nested;
 		treatAsSass = file.ext == '.sass' ? true : false;
 		
-		sass.compile(outputSass, {  style: SassStyle, indentedSyntax: treatAsSass }, function(result){
+		sass.compile(outputSass, {	style: SassStyle, indentedSyntax: treatAsSass }, function(result){
 			if (result.status == 0) {
 				var sass = result.text;
 				scimoz.replaceSel(sass);
@@ -179,6 +187,84 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 	this.compileCompressSelection = function() {
 		this.compileSelection(true);
 	}
+	
+	this.compileMultipleFiles = function(scope, getVars) {
+		scope = scope || false;
+		getVars = getVars || false;
+		var compilerEnabled = prefs.getBoolPref('compilerEnabled'),
+		compress = prefs.getBoolPref('compressFile');
+
+		if (!compilerEnabled || !scope) {
+			return;
+		}
+		
+		var outputFiles = scope.outputfiles,
+			base = scope.projectDir,
+			proccesedSass = [];
+		
+		for (var w = 0; w < outputFiles.length; w++) {
+			var outputfile = outputFiles[w],
+				path = base + outputfile,
+				proccesedFile = {};
+				
+			newBase = path.substr((self._last_slash(path) + 1), path.length);
+			
+			var buffer = self._readFile(path, '')[0],
+			
+			outputSass = self._proces_sass(path, newBase, buffer);
+			proccesedFile.path = path;
+			proccesedFile.output = outputSass;
+			proccesedSass.push(proccesedFile);
+		}
+		
+		if (getVars) {
+			self._notifcation('SASS: Getting SASS vars');
+			
+			for (var i = 0 ; i < proccesedSass.length; i++) {
+				output = proccesedSass[i].output;
+				var allVars = self._getVars(output);
+				sassData.vars = allVars;
+				self._getVars(output);
+			}
+			
+			if (sassData.vars === undefined){
+				sassData.vars = '';
+				self._notifcation('SASS: No SASS vars found');
+			}
+		} else {
+			var counter = 0;
+			var running = false;
+			var procesSass = setInterval(function(){
+				if (!running) {
+					running = true;
+					var procestFile = proccesedSass[counter];
+					sass.render(procestFile.output, {
+						compress: compress,
+						async: false,
+					})
+					.then(function(output) {
+						var newFilename = procestFile.path.replace('.sass', '.css');
+						self._saveFile(newFilename, output.css);
+						running = false;
+						
+						
+						self._updateStatusBar();
+						
+					},
+					function(error) {
+						self._notifcation('SASS ERROR: ' + error, true);
+						self._updateStatusBar('SASS ERROR: ' + error);
+						running = false;
+					});
+					counter++;
+					if (counter === proccesedSass.length) {
+						self._notifcation('SASS: ' + counter + ' Files saved');
+						clearInterval(procesSass);
+					}
+				}
+			}, 100);
+		}
+	};
 
 	this.getVars = function(search) {
 		search = search || false;
@@ -208,61 +294,106 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 		return false;
 	}
 
-	this._getContent = function(doc) {
+	this._getContent = function(doc, getVars) {
 		var file = doc.file,
 			buffer = doc.buffer,
 			base = (file) ? file.baseName : null,
 			filePath = (file) ? file.URI : null,
-			path = '';
-		output = {};
+			scopes = [],
+			path = '',
+			getVars = getVars || false,
+			output = {};
 
 
 		if (prefs.getBoolPref('useFileScopes')) {
-			var outputfile01 = prefs.getCharPref('outputfile01'),
-				outputfile02 = prefs.getCharPref('outputfile02'),
-				outputfile03 = prefs.getCharPref('outputfile03'),
-				includeSass01Folder01 = prefs.getCharPref('includeSass01Folder01').length > 0 ? prefs.getCharPref('includeSass01Folder01') : null,
-				includeSass01Folder02 = prefs.getCharPref('includeSass01Folder02').length > 0 ? prefs.getCharPref('includeSass01Folder02') : null,
-				includeSass01Folder03 = prefs.getCharPref('includeSass01Folder03').length > 0 ? prefs.getCharPref('includeSass01Folder03') : null,
-				includeSass02Folder01 = prefs.getCharPref('includeSass02Folder01').length > 0 ? prefs.getCharPref('includeSass02Folder01') : null,
-				includeSass02Folder02 = prefs.getCharPref('includeSass02Folder02').length > 0 ? prefs.getCharPref('includeSass02Folder02') : null,
-				includeSass02Folder03 = prefs.getCharPref('includeSass02Folder03').length > 0 ? prefs.getCharPref('includeSass02Folder03') : null,
-				includeSass03Folder01 = prefs.getCharPref('includeSass03Folder01').length > 0 ? prefs.getCharPref('includeSass03Folder01') : null,
-				includeSass03Folder02 = prefs.getCharPref('includeSass03Folder02').length > 0 ? prefs.getCharPref('includeSass03Folder02') : null,
-				includeSass03Folder03 = prefs.getCharPref('includeSass03Folder03').length > 0 ? prefs.getCharPref('includeSass03Folder03') : null,
-				parser = ko.uriparse
-			displayPath = parser.displayPath(filePath);
-
-			if (outputfile01.length > 0) {
-				if (displayPath.indexOf(parser.displayPath(includeSass01Folder01)) !== -1) {
-					path = outputfile01;
-				} else if (displayPath.indexOf(parser.displayPath(includeSass01Folder02)) !== -1) {
-					path = outputfile01;
-				} else if (displayPath.indexOf(parser.displayPath(includeSass01Folder03)) !== -1) {
-					path = outputfile01;
+			var parser = ko.uriparse,
+				displayPath = parser.displayPath(filePath),
+				projectDir;
+			var fileScopes = prefs.getCharPref('fileScopes');
+			var parsedScopes = JSON.parse(fileScopes);
+			var currentProject = ko.projects.manager.currentProject;
+			var matchedScopes = [];
+			
+			if (currentProject === null) {
+				notify.send('No current project', 'Tools');
+				path = displayPath;
+			} else {
+				var currentProjectName = currentProject.name.replace(/.komodoproject$/, '');
+				if (currentProject.importDirectoryLocalPath === null) {
+					projectDir = parse.displayPath(currentProject.importDirectoryURI);
+				} else {
+					projectDir = parse.displayPath(currentProject.importDirectoryLocalPath);
+				}
+				
+				if (displayPath.indexOf(projectDir) !== -1) {
+					if (helper.notEmpty(parsedScopes)) {
+						for (var i = 0; i < parsedScopes.length; i++) {
+							var thisScope = parsedScopes[i];
+							if (thisScope.project === currentProjectName) {
+								matchedScopes.push(thisScope);
+							}
+						}
+						
+						if (matchedScopes.length > 0) {
+							
+							for (var e = 0; e < matchedScopes.length; e++) {
+								var matchScope = matchedScopes[e];
+								var outputfiles = matchScope.outputfiles;
+								var includeFolders = matchScope.includeFolders;
+								var matchedOutputFile = false;
+								
+								if (outputfiles.length > 1) {
+									
+									for (var s = 0; s < outputfiles.length; s++) {
+										var matchString = outputfiles[s];
+										if (displayPath.indexOf(matchString) !== -1) {
+											path = displayPath;
+											matchedOutputFile = true;
+										}
+									}
+									
+									if (includeFolders.length > 0) {
+										for (var m = 0; m < includeFolders.length; m++) {
+											var matchString = includeFolders[m];
+											if (displayPath.indexOf(matchString) !== -1) {
+												self.compileMultipleFiles(matchScope, getVars);
+												return false;
+											}
+										}
+									}
+									
+								} else if(outputfiles.length === 1) {
+									
+									if (displayPath.indexOf(outputfiles[0]) !== -1) {
+										path = displayPath;
+										matchedOutputFile = true;
+									}
+									
+									if (includeFolders.length > 0) {
+										for (var n = 0; n < includeFolders.length; n++) {
+											var matchString = includeFolders[n];
+											if (displayPath.indexOf(matchString) !== -1) {
+												path = projectDir + outputfiles[0];
+											}
+										}
+									}
+								} 
+							}
+						} else {
+							notify.send('File outside scope', 'Tools');
+							path = displayPath;
+						}
+						
+					} else {
+						notify.send('File Scopes are empty', 'Tools');
+						path = displayPath;
+					}
+				} else {
+					notify.send('File not in current project', 'Tools');
+					path = displayPath;
 				}
 			}
-
-			if (outputfile02.length > 0) {
-				if (displayPath.indexOf(parser.displayPath(includeSass02Folder01)) !== -1) {
-					path = outputfile02;
-				} else if (displayPath.indexOf(parser.displayPath(includeSass02Folder02)) !== -1) {
-					path = outputfile02;
-				} else if (displayPath.indexOf(parser.displayPath(includeSass02Folder03)) !== -1) {
-					path = outputfile02;
-				}
-			}
-
-			if (outputfile03.length > 0) {
-				if (displayPath.indexOf(parser.displayPath(includeSass03Folder01)) !== -1) {
-					path = outputfile03;
-				} else if (displayPath.indexOf(parser.displayPath(includeSass03Folder02)) !== -1) {
-					path = outputfile03;
-				} else if (displayPath.indexOf(parser.displayPath(includeSass03Folder03)) !== -1) {
-					path = outputfile03;
-				}
-			}
-
+				
 		} else if (prefs.getBoolPref('useFilewatcher')) {
 			path = prefs.getCharPref('fileWatcher');
 			base = path.substr(self._last_slash(path) + 1, path.lenght),
@@ -324,7 +455,7 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 
 		if (!file) {
 			self._notifcation('SASS: Please save the file first', true);
-			return;  
+			return;	
 		}
 		
 		if (file.ext == '.sass' || file.ext == '.scss') {
@@ -338,7 +469,7 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 		} else {
 			self._notifcation('SASS: Please select a SASS file', true);
 			self._updateStatusBar('SASS: Please select a SASS file');
-			return;  
+			return;	
 		}
 	}
 	
@@ -460,7 +591,7 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 		}
 
 		return;
-        
+		
 	};
 	
 	this._readFile = function(root, filepath, prefix = false) {
@@ -656,6 +787,10 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 			return;
  		}
 		
+		if ($('#statusbar-sass').length > 0) {
+			$('#statusbar-sass').remove();
+		}
+		
 		view.findAnonymous("anonid", "statusbar-encoding").before(SASSpanel);
  	}
 
@@ -669,43 +804,24 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 	}
 
 	this._calculateXpos = function() {
-		var currentWindowPos = editor.getCursorWindowPosition(),
-			windowX =+ currentWindowPos['x'],
-			newToolbar = window.top.document.getElementById('toolbox_side'),
-			leftSidebarWith =+ window.top.document.getElementById('workspace_left_area').clientWidth,
-			totalLeftSidebarWidth =+ leftSidebarWith;
+		var currentWindowPos = editor.getCursorWindowPosition(true);
 			
-			if (newToolbar !== null) {
-				totalLeftSidebarWidth = totalLeftSidebarWidth + newToolbar.clientWidth;
-			}
-			
-		return windowX - totalLeftSidebarWidth;
+		return currentWindowPos.x;
 	}
 
 	this._calculateYpos = function() {
-		var currentWindowPos = editor.getCursorWindowPosition(),
-			view = $(require("ko/views").current().get()),
-			windowY =+ currentWindowPos['y'],
-			docH = +document.height,
-			adjustY =+ prefs.getIntPref('tooltipY'),
-			leftH = +window.top.document.getElementById('workspace_left_area').clientHeight, //left pane
-			menuH = +window.top.document.getElementById('toolbox_main').clientHeight, // top menu
-			tabs = window.top.document.getElementById('tabbed-view')._tabs,
-			tabsH = +tabs.clientHeight, //tabs height
-			tabsT = +tabs.clientTop, //tabs ofsset top
-			breadcrumbBar = view.findAnonymous("anonid", "breadcrumbBarWrap"), // breadcrumbbar 
-			breadcrumbBarH =+ breadcrumbBar._elements[0].clientHeight, 
-			preCalc = docH - leftH + 1,
-			topCalc = (menuH + breadcrumbBarH + preCalc) - ( tabsH + tabsT );
-
-		topCalc = topCalc + adjustY;
+		var currentWindowPos = editor.getCursorWindowPosition(true),
+			defaultTextHeight = (ko.views.manager.currentView.scimoz.textHeight(0) - 10),
+			adjustY =+ prefs.getIntPref('tooltipY');
+			
+			defaultTextHeight = defaultTextHeight + adjustY;
 		
-		return windowY - topCalc;
+		return (currentWindowPos.y + defaultTextHeight);
 	}
 
 	insertSassVar = function() {
 		var scimoz = ko.views.manager.currentView.scimoz,
-			currentLine =  scimoz.lineFromPosition(scimoz.currentPos),
+			currentLine =	scimoz.lineFromPosition(scimoz.currentPos),
 			input = $('#sass_auto');
 
 		if (input.length > 0) {
@@ -752,8 +868,10 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 
 	this._autocomplete = function() {
 		var completions = sassData.vars,
+			mainWindow = document.getElementById('komodo_main'),
 			popup = document.getElementById('sass_wrapper'),
 			autocomplete = document.createElement('textbox'),
+			currentView = ko.views.manager.currentView,
 			x = self._calculateXpos(),
 			y = self._calculateYpos();
 
@@ -767,12 +885,13 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 			autocomplete.setAttribute('highlightnonmatches', 'true');
 			autocomplete.setAttribute('ontextentered', 'insertSassVar()');
 			autocomplete.setAttribute('ontextreverted', 'abortSassVarCompletion()');
+			autocomplete.setAttribute('ignoreblurwhilesearching', 'true');
 			autocomplete.setAttribute('minresultsforpopup', '0');
 			autocomplete.setAttribute('onblur', 'blurSassComletion()');
 			autocomplete.setAttribute('onfocus', 'focusSassCompletion()');
 			popup.appendChild(autocomplete);
 
-			document.documentElement.appendChild(popup);
+			mainWindow.appendChild(popup);
 		}
 
 		if (typeof completions === 'undefined') {
@@ -783,8 +902,11 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 
 
 		if (completions.length > 0) {
+			if (currentView.scintilla.autocomplete.active) {
+				currentView.scintilla.autocomplete.close();
+			}
 			autocomplete.setAttribute('autocompletesearchparam', completions);
-			popup.openPopup(ko.views.manager.currentView, "after_pointer", x, y, false, false);
+			popup.openPopup(mainWindow, "", x, y, false, false);
 			autocomplete.focus();
 			autocomplete.value = "$";
 			autocomplete.open = true;
@@ -820,54 +942,91 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 			if (prefs.getBoolPref('useFileScopes')) {
 				var path = 'Outside file scope',
 					filePath = (file) ? file.URI : null,
-					outputfile01 = prefs.getCharPref('outputfile01'),
-					outputfile02 = prefs.getCharPref('outputfile02'),
-					outputfile03 = prefs.getCharPref('outputfile03'),
-					includeSass01Folder01 = prefs.getCharPref('includeSass01Folder01').length > 0 ? prefs.getCharPref('includeSass01Folder01') : null,
-					includeSass01Folder02 = prefs.getCharPref('includeSass01Folder02').length > 0 ? prefs.getCharPref('includeSass01Folder02') : null,
-					includeSass01Folder03 = prefs.getCharPref('includeSass01Folder03').length > 0 ? prefs.getCharPref('includeSass01Folder03') : null,
-					includeSass02Folder01 = prefs.getCharPref('includeSass02Folder01').length > 0 ? prefs.getCharPref('includeSass02Folder01') : null,
-					includeSass02Folder02 = prefs.getCharPref('includeSass02Folder02').length > 0 ? prefs.getCharPref('includeSass02Folder02') : null,
-					includeSass02Folder03 = prefs.getCharPref('includeSass02Folder03').length > 0 ? prefs.getCharPref('includeSass02Folder03') : null,
-					includeSass03Folder01 = prefs.getCharPref('includeSass03Folder01').length > 0 ? prefs.getCharPref('includeSass03Folder01') : null,
-					includeSass03Folder02 = prefs.getCharPref('includeSass03Folder02').length > 0 ? prefs.getCharPref('includeSass03Folder02') : null,
-					includeSass03Folder03 = prefs.getCharPref('includeSass03Folder03').length > 0 ? prefs.getCharPref('includeSass03Folder03') : null,
-					parser = ko.uriparse,
-					displayPath = parser.displayPath(filePath);
-
-				if (outputfile01.length > 0) {
-					if (displayPath.indexOf(parser.displayPath(includeSass01Folder01)) !== -1) {
-						path = outputfile01;
-					} else if (displayPath.indexOf(parser.displayPath(includeSass01Folder02)) !== -1) {
-						path = outputfile01;
-					} else if (displayPath.indexOf(parser.displayPath(includeSass01Folder03)) !== -1) {
-						path = outputfile01;
-					} else if (displayPath.indexOf(parser.displayPath(outputfile01)) !== -1) {
-						path = outputfile01;
+					parser = ko.uriparse;
+					
+				var parser = ko.uriparse,
+					displayPath = parser.displayPath(filePath),
+					projectDir;
+				var fileScopes = prefs.getCharPref('fileScopes');
+				var parsedScopes = JSON.parse(fileScopes);
+				var currentProject = ko.projects.manager.currentProject;
+				var matchedScopes = [];
+				
+				if (currentProject === null) {
+					path = 'No current project';
+				} else {
+					var currentProjectName = currentProject.name.replace(/.komodoproject$/, '');
+					if (currentProject.importDirectoryLocalPath === null) {
+						projectDir = parse.displayPath(currentProject.importDirectoryURI);
+					} else {
+						projectDir = parse.displayPath(currentProject.importDirectoryLocalPath);
 					}
-				}
-
-				if (outputfile02.length > 0) {
-					if (displayPath.indexOf(parser.displayPath(includeSass02Folder01)) !== -1) {
-						path = outputfile02;
-					} else if (displayPath.indexOf(parser.displayPath(includeSass02Folder02)) !== -1) {
-						path = outputfile02;
-					} else if (displayPath.indexOf(parser.displayPath(includeSass02Folder03)) !== -1) {
-						path = outputfile02;
-					} else if (displayPath.indexOf(parser.displayPath(outputfile02)) !== -1) {
-						path = outputfile02;
-					}
-				}
-
-				if (outputfile03.length > 0) {
-					if (displayPath.indexOf(parser.displayPath(includeSass03Folder01)) !== -1) {
-						path = outputfile03;
-					} else if (displayPath.indexOf(parser.displayPath(includeSass03Folder02)) !== -1) {
-						path = outputfile03;
-					} else if (displayPath.indexOf(parser.displayPath(includeSass03Folder03)) !== -1) {
-						path = outputfile03;
-					} else if (displayPath.indexOf(parser.displayPath(outputfile03)) !== -1) {
-						path = outputfile03
+					
+					if (displayPath.indexOf(projectDir) !== -1) {
+						if (helper.notEmpty(parsedScopes)) {
+							for (var i = 0; i < parsedScopes.length; i++) {
+								var thisScope = parsedScopes[i];
+								if (thisScope.project === currentProjectName) {
+									matchedScopes.push(thisScope);
+								}
+							}
+							
+							if (matchedScopes.length > 0) {
+								
+								for (var e = 0; e < matchedScopes.length; e++) {
+									var matchScope = matchedScopes[e];
+									var outputfiles = matchScope.outputfiles;
+									var includeFolders = matchScope.includeFolders;
+									var matchedOutputFile = false;
+									
+									if (outputfiles.length > 1) {
+										
+										for (var s = 0; s < outputfiles.length; s++) {
+											var matchString = outputfiles[s];
+											if (displayPath.indexOf(matchString) !== -1) {
+												path = matchScope.name;
+												matchedOutputFile = true;
+											}
+										}
+										
+										if (!matchedOutputFile) {
+											for (var m = 0; m < includeFolders.length; m++) {
+												var matchString = includeFolders[m];
+												if (displayPath.indexOf(matchString) !== -1) {
+													path = matchScope.name;
+												}
+											}
+										}
+										
+									} else if(outputfiles.length === 1) {
+										
+										if (displayPath.indexOf(outputfiles[0]) !== -1) {
+											path = matchScope.name;
+											matchedOutputFile = true;
+										}
+										
+										if (!matchedOutputFile) {
+											for (var n = 0; n < includeFolders.length; n++) {
+												var matchString = includeFolders[n];
+												if (displayPath.indexOf(matchString) !== -1) {
+													path = matchScope.name;
+												}
+											}
+										}
+										
+									} 
+									
+									
+								}
+							} else {
+								path = 'File outside scope';
+							}
+							
+						} else {
+							path = 'File Scopes are empty';
+						}
+					} else {
+						path = 'File not in current project';
 					}
 				}
 
@@ -975,14 +1134,31 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 				return;
 			}
 			
-			var scimoz = ko.views.manager.currentView.scimoz;
-			if (e.shiftKey && e.charCode == 36) {
-				var d = ko.views.manager.currentView.document || ko.views.manager.currentView.koDoc,
+			var currentView = ko.views.manager.currentView;
+			if (!currentView) {
+				return;
+			}
+			
+			var language = currentView.language;
+			if (!language) {
+				return;
+			}
+			if (language !== 'Sass' && language !== 'SCSS') {
+				return;
+			}
+			
+			var scimoz = currentView.scimoz;
+			if (e.shiftKey && e.charCode == 36 && !e.altKey && !e.metaKey) {
+				var d = currentView.document || currentView.koDoc,
 					file = d.file;
 
 				if (!file) {
 					self._notifcation('Please save the file first', true);
 					return;
+				}
+				
+				if ( !scimoz || ! scimoz.focus) {
+					return false;
 				}
 
 				if (file.ext == '.sass' || file.ext == '.scss') {
@@ -993,6 +1169,9 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 						if (currentLineStart > 3) {
 							e.preventDefault();
 							e.stopPropagation();
+							if (scimoz.selText.length > 0) {
+								scimoz.replaceSel('');
+							}
 							self._autocomplete();
 						} else {
 							search = true;
@@ -1014,32 +1193,48 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 		var msgType = prefs.getCharPref('msgType');
 		
 		if (msgType === 'web-notifications') {
-			var icon = error ? 'chrome://sass/content/sass-error-icon.png' : 'chrome://sass/content/sass-icon.png';
-			if (!("Notification" in window)) {
-			  alert("This browser does not support system notifications");
-			}
-		  
-			else if (Notification.permission === "granted") {
-			  var options = {
-				body: $message,
-				icon: icon
-			  }
-			  var n = new Notification('SASS Compiler', options);
-			  setTimeout(n.close.bind(n), 5000); 
-			}
-		  
-			else if (Notification.permission !== 'denied') {
-			  Notification.requestPermission(function (permission) {
-				if (permission === "granted") {
-					var options = {
-					   body: $message,
-					   icon: icon
-					 }
-					 var n = new Notification('SASS Compiler', options);
-					setTimeout(n.close.bind(n), 5000); 
+			
+			if (!notification) {
+				notification = true;
+				var icon = error ? 'chrome://sass/content/sass-error-icon.png' : 'chrome://sass/content/sass-icon.png';
+				if (!("Notification" in window)) {
+					alert("This browser does not support system notifications");
 				}
-			  });
+				
+				else if (Notification.permission === "granted") {
+					var options = {
+					body: $message,
+					icon: icon
+					}
+					var n = new Notification('SASS Compiler', options);
+					setTimeout(function(){
+						n.close.bind(n);
+						notification = false;
+					}, 5000); 
+				}
+				
+				else if (Notification.permission !== 'denied') {
+					Notification.requestPermission(function (permission) {
+					if (permission === "granted") {
+						var options = {
+							 body: $message,
+							 icon: icon
+						 }
+						 var n = new Notification('SASS Compiler', options);
+						setTimeout(function(){
+							n.close.bind(n);
+							notification = false;
+						}, 5000); 
+					}
+					});
+				}
+			} else {
+				setTimeout(function(){
+					self._notifcation($message, error);
+				}, 200);
 			}
+			
+			
 		} else {
 			notify.send(
 					$message,
@@ -1047,21 +1242,55 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 			);
 		}
 	}
-	
-	var features = "chrome,titlebar,toolbar,centerscreen";
+
+	var features = "chrome,titlebar,toolbar,centerscreen,dependent";
 	this.OpenSassSettings = function() {
 		window.openDialog('chrome://sass/content/pref-overlay.xul', "sassSettings", features);
 	}
 
 	this.OpenSassFileScopes = function() {
+		var currentProject = ko.projects.manager.currentProject;
 		var windowVars = {
 			ko: ko,
 			sassData: sassData,
 			prefs: prefs,
 			overlay: self,
 			notify: notify,
+			project: currentProject,
 		};
+		
 		window.openDialog('chrome://sass/content/fileScopes.xul', "sassFileScopes", features, windowVars);
+	}
+	
+	this.openNewFileScope = function(scope){
+		scope = scope || false;
+		
+		features = features + ',alwaysRaised';
+		
+		var currentProject = ko.projects.manager.currentProject;
+		var windowVars = {
+			ko: ko,
+			scope: scope,
+			sassData: sassData,
+			prefs: prefs,
+			overlay: self,
+			notify: notify,
+			project: currentProject,
+		};
+		
+		if (currentProject === null && scope === false) {
+			alert('No current project selected');
+			window.focus();
+			return false;
+		}
+		
+		window.openDialog('chrome://sass/content/new-filescope.xul', "newFileScope", features, windowVars);
+	}
+	
+	this._focusFileScopes = function(){
+		setTimeout(function(){
+			helper.focusWin('sassFileScopes');
+		}, 500);
 	}
 
 	this._AfterSafeAction = function() {
@@ -1084,3 +1313,9 @@ if (typeof(extensions.sass) === 'undefined') extensions.sass = {
 	window.addEventListener("file_saved", self._AfterSafeAction, false);
 	window.addEventListener("current_view_changed", self._updateView, false);
 }).apply(extensions.sass);
+
+
+
+
+
+

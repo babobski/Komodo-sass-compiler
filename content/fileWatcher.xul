@@ -4,17 +4,17 @@
 <?xml-stylesheet href="less://sass/skin/sass.less" type="text/css"?>
 
 <dialog id="removeFileWatcher" title="Remove file watcher"
-        xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
-        buttons="accept,cancel"
-        ondialogaccept="return doOK();"
-        ondialogcancel="return true;">
+		xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+		buttons="accept,cancel"
+		ondialogaccept="return doOK();"
+		ondialogcancel="return true;">
 
 <script>
 var self = window.arguments[0];
-  
+	
 function doOK(){
-  self.disableFileWatcher();
-  return true;
+	self.disableFileWatcher();
+	return true;
 }
 
 </script>
@@ -22,3 +22,4 @@ function doOK(){
 <description value="File watcher is still enabled form last session or is enabled in a other window. Do you want to diable the filewatcher"/>
 
 </dialog>
+

@@ -4,7 +4,9 @@
 <?xml-stylesheet href="less://sass/skin/sass.less" type="text/css"?>
 
 <prefwindow id="sass-prefs"
-     title="SASS Preferences"
+	 title="SASS Preferences"
+	 width="300"
+	 height="340"
 	 xmlns:html="http://www.w3.org/1999/xhtml"
      xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 	
@@ -17,8 +19,6 @@
 			<preference id="pref_compress" name="extensions.sass.compressFile" type="bool"/>
 			<preference id="pref_msgType" name="extensions.sass.msgType" type="string"/>
 		</preferences>
-		
-		<!--<image maxheight="64" maxwidth="252" src="chrome://sass/content/sass-icon.png" />-->
 		
 		<html:h3>
 			On file save
@@ -41,27 +41,27 @@
 		<label value="Calibrate tooltip vertical position" />
 		<menulist id="tooltipY" preference="pref_tooltipY" label="Calibrate tooltip vertical position">
 			<menupopup>
-				<menuitem value="-5" label="10"/>
-				<menuitem value="-4" label="9"/>
-				<menuitem value="-3" label="8"/>
-				<menuitem value="-2" label="7"/>
-				<menuitem value="-1" label="6"/>
-				<menuitem value="0" label="5"/>
-				<menuitem value="1" label="4"/>
-				<menuitem value="2" label="3"/>
-				<menuitem value="3" label="2"/>
-				<menuitem value="4" label="1"/>
-				<menuitem value="5" label="0"/>
-				<menuitem value="6" label="-1"/>
-				<menuitem value="7" label="-2"/>
-				<menuitem value="8" label="-3"/>
-				<menuitem value="9" label="-4"/>
-				<menuitem value="10" label="-5"/>
-				<menuitem value="11" label="-6"/>
-				<menuitem value="12" label="-7"/>
-				<menuitem value="13" label="-8"/>
-				<menuitem value="14" label="-9"/>
-				<menuitem value="15" label="-10"/>
+				<menuitem value="0" label="10"/>
+				<menuitem value="1" label="9"/>
+				<menuitem value="2" label="8"/>
+				<menuitem value="3" label="7"/>
+				<menuitem value="4" label="6"/>
+				<menuitem value="5" label="5"/>
+				<menuitem value="6" label="4"/>
+				<menuitem value="7" label="3"/>
+				<menuitem value="8" label="2"/>
+				<menuitem value="9" label="1"/>
+				<menuitem value="10" label="0"/>
+				<menuitem value="11" label="-1"/>
+				<menuitem value="12" label="-2"/>
+				<menuitem value="13" label="-3"/>
+				<menuitem value="14" label="-4"/>
+				<menuitem value="15" label="-5"/>
+				<menuitem value="16" label="-6"/>
+				<menuitem value="17" label="-7"/>
+				<menuitem value="18" label="-8"/>
+				<menuitem value="19" label="-9"/>
+				<menuitem value="20" label="-10"/>
 			</menupopup>
 		</menulist>
 	</prefpane>
