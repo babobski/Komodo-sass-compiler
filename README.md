@@ -41,7 +41,7 @@ The vars will be search automatically( on file open and after you pressed $ on s
 You can also trigger the search trough the menu.  
 When you type $ a auto completion box will be shown.
 
-![Screenshot](Screenshot02.png)
+![Screenshot](screenshot02.png)
 
 ### Menu options
 **Tools > SASS > ...**
@@ -112,3 +112,7 @@ You can set up file scopes with the following structures:
  
 You can select multiple output-files, but is not recommended to use more that two output-files for performance reasons.
  
+## File Watcher
+If you want to edit a SASS/SCSS-files that has includes, on the fly.  
+You can set up a File watcher, when you enable the file Watcher the current file will be added as output-file.  
+When you now edit Less files only the output-file will be triggered.
